@@ -1,0 +1,2503 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>DistroMS - Smart Distribution Management</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a2e;
+        }
+
+        /* Login Screen */
+        .login-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-card h2 {
+            font-size: 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .login-card input {
+            width: 100%;
+            padding: 14px;
+            margin: 10px 0;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .login-card input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .login-card button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: transform 0.2s;
+        }
+
+        .login-card button:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Main App */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Top Header */
+        .top-bar {
+            background: white;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo i {
+            background: none;
+            -webkit-text-fill-color: #667eea;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-email {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .logout-btn {
+            background: #fee2e2;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: #dc2626;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: #fecaca;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            gap: 0;
+        }
+
+        /* Map Section */
+        .map-section {
+            flex: 2;
+            position: relative;
+            background: #e8e8e8;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Map Mode Indicator */
+        .map-mode-indicator {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 8px 16px;
+            border-radius: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            pointer-events: none;
+        }
+
+        .map-mode-indicator i {
+            font-size: 18px;
+        }
+
+        .map-mode-indicator.active {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Side Panel */
+        .side-panel {
+            width: 380px;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.05);
+            overflow-y: auto;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            padding: 16px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 12px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .stat-number {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .stat-number.danger {
+            color: #dc2626;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            padding: 16px;
+            display: flex;
+            gap: 10px;
+            border-bottom: 1px solid #e9ecef;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .action-btn.secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .action-btn.warning {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Shops List */
+        .shops-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #6c757d;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .shop-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .shop-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+            transform: translateX(4px);
+        }
+
+        .shop-card.active {
+            border-color: #667eea;
+            background: #f8f7ff;
+        }
+
+        .shop-name {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .shop-pending {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .shop-pending.zero {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .shop-address {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 6px;
+        }
+
+        .shop-contact {
+            font-size: 11px;
+            color: #adb5bd;
+        }
+
+        .no-location-badge {
+            font-size: 10px;
+            background: #fef3c7;
+            color: #d97706;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 8px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 24px;
+            max-width: 550px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #adb5bd;
+        }
+
+        .form-group {
+            padding: 12px 24px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .location-picker {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 12px;
+            margin-top: 8px;
+        }
+
+        .location-preview {
+            background: #e9ecef;
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 12px;
+            font-family: monospace;
+            margin-top: 8px;
+        }
+
+        .pick-location-btn {
+            width: 100%;
+            padding: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .pick-location-btn.active {
+            background: #dc2626;
+        }
+
+        .btn-submit {
+            width: calc(100% - 48px);
+            margin: 20px 24px;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Popup Styles */
+        .custom-popup .shop-popup {
+            min-width: 200px;
+        }
+
+        .popup-name {
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #1a1a2e;
+        }
+
+        .popup-detail {
+            font-size: 12px;
+            color: #6c757d;
+            margin: 4px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .popup-pending {
+            font-weight: 600;
+            margin: 8px 0;
+            padding: 6px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .popup-pending.high {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .popup-pending.low {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .popup-sale-btn {
+            width: 100%;
+            padding: 8px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+
+        .popup-edit-btn {
+            width: 100%;
+            padding: 8px;
+            background: #f3f4f6;
+            color: #374151;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        /* Toast Message */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-size: 14px;
+            z-index: 2000;
+            animation: fadeInUp 0.3s ease;
+            display: none;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .side-panel {
+                width: 100%;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 50%;
+                z-index: 50;
+                border-radius: 20px 20px 0 0;
+                transform: translateY(calc(100% - 60px));
+                transition: transform 0.3s ease;
+            }
+
+            .side-panel.open {
+                transform: translateY(0);
+            }
+
+            .side-panel::before {
+                content: '';
+                position: absolute;
+                top: 10px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 40px;
+                height: 4px;
+                background: #cbd5e1;
+                border-radius: 2px;
+            }
+
+            .map-section {
+                flex: 1;
+            }
+
+            .stats-bar {
+                gap: 8px;
+            }
+
+            .stat-number {
+                font-size: 18px;
+            }
+
+            .quick-actions {
+                padding: 12px;
+            }
+
+            .action-btn {
+                padding: 10px;
+                font-size: 12px;
+            }
+        }
+
+        .error-message {
+            color: #dc2626;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .search-box {
+            margin-bottom: 12px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+
+        /* ── Navigation Tabs ── */
+        .nav-tabs {
+            display: flex;
+            gap: 4px;
+            background: #f3f4f6;
+            padding: 4px;
+            border-radius: 30px;
+        }
+
+        .nav-tab {
+            padding: 8px 18px;
+            border: none;
+            background: transparent;
+            border-radius: 24px;
+            font-weight: 500;
+            cursor: pointer;
+            color: #6c757d;
+            transition: all 0.2s;
+            font-size: 13px;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+        }
+
+        .nav-tab:hover:not(.active) {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        /* ── Section Views ── */
+        .section-view {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .section-view.active {
+            display: flex;
+        }
+
+        /* ── Data Page ── */
+        .data-page {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 24px;
+            background: #f0f2f5;
+        }
+
+        /* ── Stats Row ── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card-lg {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .stat-card-lg .sc-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .stat-card-lg .sc-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 4px;
+        }
+
+        .stat-card-lg .sc-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        /* ── Table Card ── */
+        .table-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .table-toolbar {
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f1f3f5;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .table-toolbar h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .toolbar-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .tbl-search {
+            padding: 8px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 20px;
+            font-size: 13px;
+            width: 200px;
+            transition: border-color 0.2s;
+        }
+
+        .tbl-search:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .tbl-add-btn {
+            padding: 9px 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: transform 0.2s;
+        }
+
+        .tbl-add-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background: #f8f9fa;
+            padding: 11px 16px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 700;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .data-table td {
+            padding: 13px 16px;
+            border-bottom: 1px solid #f1f3f5;
+            font-size: 13px;
+            color: #374151;
+            vertical-align: middle;
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tr:hover td {
+            background: #fafbff;
+        }
+
+        .tbl-overflow {
+            overflow-x: auto;
+        }
+
+        /* ── Row Action Buttons ── */
+        .btn-xs {
+            padding: 5px 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-edit {
+            background: #eff6ff;
+            color: #2563eb;
+        }
+
+        .btn-edit:hover {
+            background: #dbeafe;
+        }
+
+        .btn-del {
+            background: #fff5f5;
+            color: #dc2626;
+        }
+
+        .btn-del:hover {
+            background: #fee2e2;
+        }
+
+        .btn-sale {
+            background: #f0fdf4;
+            color: #059669;
+        }
+
+        .btn-sale:hover {
+            background: #dcfce7;
+        }
+
+        .btn-collect {
+            background: #fffbeb;
+            color: #d97706;
+        }
+
+        .btn-collect:hover {
+            background: #fef3c7;
+        }
+
+        /* ── Badges ── */
+        .badge {
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-paid {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .badge-partial {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .badge-due {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .badge-cat {
+            background: #ede9fe;
+            color: #7c3aed;
+        }
+
+        .badge-low {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .badge-ok {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        /* ── Empty State ── */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            display: block;
+            opacity: 0.4;
+        }
+
+        .empty-state p {
+            font-size: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-card">
+            <h2><i class="fas fa-truck"></i> DistroMS</h2>
+            <p style="color: #666; margin-bottom: 20px;">Distribution Management System</p>
+            <form id="loginForm">
+                <input type="email" id="loginEmail" placeholder="Email" required>
+                <input type="password" id="loginPassword" placeholder="Password" required>
+                <button type="submit">Login</button>
+                <div id="loginError" class="error-message"></div>
+            </form>
+            <p style="margin-top: 20px; font-size: 12px; color: #999;">
+                Demo: admin@distro.com / admin123
+            </p>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" style="display: none;">
+        <div class="app-container">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div class="logo">
+                    <i class="fas fa-hammer"></i>
+                    <span>HardwareMS</span>
+                </div>
+                <!-- Navigation Tabs -->
+                <nav class="nav-tabs" id="mainNav">
+                    <button class="nav-tab active" id="tab-map" onclick="showSection('map')">
+                        <i class="fas fa-map-marked-alt"></i> Map
+                    </button>
+                    <button class="nav-tab" id="tab-shops" onclick="showSection('shops')">
+                        <i class="fas fa-store"></i> Shops
+                    </button>
+                    <button class="nav-tab" id="tab-products" onclick="showSection('products')">
+                        <i class="fas fa-boxes"></i> Products
+                    </button>
+                    <button class="nav-tab" id="tab-sales" onclick="showSection('sales')">
+                        <i class="fas fa-receipt"></i> Sales
+                    </button>
+                </nav>
+                <div class="user-info">
+                    <span class="user-email" id="userEmail"></span>
+                    <button class="logout-btn" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+
+            <!-- ══ SECTION: Map (default) ══ -->
+            <div id="section-map" class="section-view active">
+                <div class="main-layout">
+                    <!-- Map -->
+                    <div class="map-section">
+                        <div id="map"></div>
+                        <div class="map-mode-indicator" id="mapModeIndicator">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Normal Mode</span>
+                        </div>
+                    </div>
+
+                    <!-- Side Panel -->
+                    <div class="side-panel" id="sidePanel">
+                        <div class="stats-bar">
+                            <div class="stat-item">
+                                <div class="stat-label">Total Shops</div>
+                                <div class="stat-number" id="statShops">0</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Total Sales</div>
+                                <div class="stat-number" id="statSales">₹0</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Pending Fees</div>
+                                <div class="stat-number danger" id="statPending">₹0</div>
+                            </div>
+                        </div>
+                        <div class="quick-actions">
+                            <button class="action-btn primary" id="addShopBtn">
+                                <i class="fas fa-plus"></i> Add Shop
+                            </button>
+                            <button class="action-btn secondary" id="addProductBtn">
+                                <i class="fas fa-box"></i> Add Product
+                            </button>
+                        </div>
+                        <div class="shops-list">
+                            <div class="section-title">
+                                <span><i class="fas fa-store"></i> Shops on Map</span>
+                                <span id="shopCount"></span>
+                            </div>
+                            <div class="search-box">
+                                <input type="text" id="searchShops" placeholder="🔍 Search shops...">
+                            </div>
+                            <div id="shopsListContainer">
+                                <div class="loading">Loading shops...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ SECTION: Shops ══ -->
+            <div id="section-shops" class="section-view">
+                <div class="data-page">
+                    <!-- Stats Row -->
+                    <div class="stats-row" id="shopsStatsRow">
+                        <div class="stat-card-lg">
+                            <div class="sc-icon" style="background:#ede9fe"><i class="fas fa-store"
+                                    style="color:#7c3aed"></i></div>
+                            <div>
+                                <div class="sc-label">Total Shops</div>
+                                <div class="sc-value" id="sc-totalShops">0</div>
+                            </div>
+                        </div>
+                        <div class="stat-card-lg">
+                            <div class="sc-icon" style="background:#fee2e2"><i class="fas fa-rupee-sign"
+                                    style="color:#dc2626"></i></div>
+                            <div>
+                                <div class="sc-label">Total Pending</div>
+                                <div class="sc-value" id="sc-totalPending">₹0</div>
+                            </div>
+                        </div>
+                        <div class="stat-card-lg">
+                            <div class="sc-icon" style="background:#d1fae5"><i class="fas fa-check-circle"
+                                    style="color:#059669"></i></div>
+                            <div>
+                                <div class="sc-label">Shops with GPS</div>
+                                <div class="sc-value" id="sc-shopsGps">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Table -->
+                    <div class="table-card">
+                        <div class="table-toolbar">
+                            <h3><i class="fas fa-store" style="color:#667eea"></i> &nbsp;All Shops</h3>
+                            <div class="toolbar-right">
+                                <input class="tbl-search" id="shopsTableSearch" placeholder="🔍 Search..."
+                                    oninput="renderShopsTable(this.value)">
+                                <button class="tbl-add-btn" onclick="openShopModal()">
+                                    <i class="fas fa-plus"></i> Add Shop
+                                </button>
+                            </div>
+                        </div>
+                        <div class="tbl-overflow">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Shop Name</th>
+                                        <th>Owner</th>
+                                        <th>Type</th>
+                                        <th>Phone</th>
+                                        <th>Address</th>
+                                        <th>Pending Fees</th>
+                                        <th>Location</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="shopsTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ SECTION: Products ══ -->
+            <div id="section-products" class="section-view">
+                <div class="data-page">
+                    <div class="stats-row">
+                        <div class="stat-card-lg">
+                            <div class="sc-icon" style="background:#fef3c7"><i class="fas fa-boxes"
+                                    style="color:#d97706"></i></div>
+                            <div>
+                                <div class="sc-label">Total Products</div>
+                                <div class="sc-value" id="sc-totalProducts">0</div>
+                            </div>
+                        </div>
+                        <div class="stat-card-lg">
+                            <div class="sc-icon" style="background:#fee2e2"><i class="fas fa-exclamation-triangle"
+                                    style="color:#dc2626"></i></div>
+                            <div>
+                                <div class="sc-label">Low Stock (&lt;10)</div>
+                                <div class="sc-value" id="sc-lowStock">0</div>
+                            </div>
+                        </div>
+                        <div class="stat-card-lg">
+                            <div class="sc-icon" style="background:#d1fae5"><i class="fas fa-layer-group"
+                                    style="color:#059669"></i></div>
+                            <div>
+                                <div class="sc-label">Total Stock Value</div>
+                                <div class="sc-value" id="sc-stockValue">₹0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-card">
+                        <div class="table-toolbar">
+                            <h3><i class="fas fa-boxes" style="color:#d97706"></i> &nbsp;Hardware Products</h3>
+                            <div class="toolbar-right">
+                                <input class="tbl-search" id="productsTableSearch" placeholder="🔍 Search..."
+                                    oninput="renderProductsTable(this.value)">
+                                <button class="tbl-add-btn" onclick="openProductModal()">
+                                    <i class="fas fa-plus"></i> Add Product
+                                </button>
+                            </div>
+                        </div>
+                        <div class="tbl-overflow">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Product Name</th>
+                                        <th>Category</th>
+                                        <th>Unit</th>
+                                        <th>Cost / Unit</th>
+                                        <th>Sell / Unit</th>
+                                        <th>Margin</th>
+                                        <th>Stock</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="productsTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ SECTION: Sales ══ -->
+            <div id="section-sales" class="section-view">
+                <div class="data-page">
+                    <div class="stats-row">
+                        <div class="stat-card-lg">
+                            <div class="sc-icon" style="background:#dbeafe"><i class="fas fa-receipt"
+                                    style="color:#2563eb"></i></div>
+                            <div>
+                                <div class="sc-label">Total Transactions</div>
+                                <div class="sc-value" id="sc-totalTxn">0</div>
+                            </div>
+                        </div>
+                        <div class="stat-card-lg">
+                            <div class="sc-icon" style="background:#d1fae5"><i class="fas fa-hand-holding-usd"
+                                    style="color:#059669"></i></div>
+                            <div>
+                                <div class="sc-label">Revenue Collected</div>
+                                <div class="sc-value" id="sc-collected">₹0</div>
+                            </div>
+                        </div>
+                        <div class="stat-card-lg">
+                            <div class="sc-icon" style="background:#fee2e2"><i class="fas fa-clock"
+                                    style="color:#dc2626"></i></div>
+                            <div>
+                                <div class="sc-label">Pending Amount</div>
+                                <div class="sc-value" id="sc-salesPending">₹0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-card">
+                        <div class="table-toolbar">
+                            <h3><i class="fas fa-receipt" style="color:#2563eb"></i> &nbsp;Sales History</h3>
+                            <div class="toolbar-right">
+                                <input class="tbl-search" id="salesTableSearch" placeholder="🔍 Search..."
+                                    oninput="renderSalesTable(this.value)">
+                            </div>
+                        </div>
+                        <div class="tbl-overflow">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Shop</th>
+                                        <th>Product</th>
+                                        <th>Qty</th>
+                                        <th>Unit Price</th>
+                                        <th>Total</th>
+                                        <th>Paid</th>
+                                        <th>Pending</th>
+                                        <th>Method</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="salesTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Add Shop Modal -->
+    <div id="shopModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="shopModalTitle">Add New Shop</h2>
+                <button class="modal-close" onclick="closeModal('shopModal')">&times;</button>
+            </div>
+            <form id="shopForm">
+                <input type="hidden" id="shopId">
+                <div class="form-group">
+                    <label>Shop Name *</label>
+                    <input type="text" id="shopName" required placeholder="e.g., Sharma Hardware">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Owner Name</label>
+                        <input type="text" id="ownerName" placeholder="Full name">
+                    </div>
+                    <div class="form-group">
+                        <label>Shop Type *</label>
+                        <select id="shopType">
+                            <option value="Retailer">🏪 Retailer</option>
+                            <option value="Wholesaler">🏭 Wholesaler</option>
+                            <option value="Both">🔄 Both</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" id="shopPhone" placeholder="10 digit number">
+                </div>
+                <div class="form-group">
+                    <label>Address *</label>
+                    <textarea id="shopAddress" rows="2" required placeholder="Full address"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>📍 Location on Map</label>
+                    <div class="location-picker">
+                        <button type="button" id="pickLocationBtn" class="pick-location-btn">
+                            <i class="fas fa-map-marker-alt"></i> Click on Map to Set Location
+                        </button>
+                        <div class="location-preview" id="locationPreview">
+                            No location selected yet
+                        </div>
+                    </div>
+                    <input type="hidden" id="shopLat">
+                    <input type="hidden" id="shopLng">
+                </div>
+                <div class="form-group">
+                    <label>Pending Fees (₹)</label>
+                    <input type="number" id="shopPendingFees" value="0" step="0.01">
+                </div>
+                <button type="submit" class="btn-submit">Save Shop</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Product Modal -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Product</h2>
+                <button class="modal-close" onclick="closeModal('productModal')">&times;</button>
+            </div>
+            <form id="productForm">
+                <input type="hidden" id="productId">
+                <div class="form-group">
+                    <label>Product Name *</label>
+                    <input type="text" id="productName" required placeholder="e.g., GI Pipe 1 inch">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="productCategory">
+                            <option>Pipes &amp; Fittings</option>
+                            <option>Electrical</option>
+                            <option>Plumbing</option>
+                            <option>Tools &amp; Equipment</option>
+                            <option>Fasteners &amp; Bolts</option>
+                            <option>Paints &amp; Chemicals</option>
+                            <option>Sanitary Ware</option>
+                            <option>Safety Equipment</option>
+                            <option>Other Hardware</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Unit</label>
+                        <select id="productUnit">
+                            <option value="piece">Per Piece</option>
+                            <option value="dozen">Per Dozen</option>
+                            <option value="meter">Per Meter</option>
+                            <option value="feet">Per Feet</option>
+                            <option value="kg">Per KG</option>
+                            <option value="litre">Per Litre</option>
+                            <option value="box">Per Box</option>
+                            <option value="set">Per Set</option>
+                            <option value="bundle">Per Bundle</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Cost Price / Unit (₹) *</label>
+                        <input type="number" id="costPrice" step="0.01" required placeholder="Your purchase cost">
+                    </div>
+                    <div class="form-group">
+                        <label>Selling Price / Unit (₹) *</label>
+                        <input type="number" id="sellingPrice" step="0.01" required placeholder="Price you charge">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Current Stock (in units)</label>
+                    <input type="number" id="productStock" value="0" placeholder="How many units in stock">
+                </div>
+                <button type="submit" class="btn-submit">Save Product</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sale Modal (upgraded) -->
+    <div id="saleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h2>🛒 Record Sale</h2>
+                    <div id="saleShopBadge" style="font-size:12px;margin-top:4px;color:#6c757d"></div>
+                </div>
+                <button class="modal-close" onclick="closeModal('saleModal')">&times;</button>
+            </div>
+            <form id="saleForm">
+                <input type="hidden" id="saleShopId">
+                <div class="form-group">
+                    <label>Shop</label>
+                    <input type="text" id="saleShopName" readonly
+                        style="background:#f8f9fa;font-weight:600;color:#374151">
+                </div>
+                <div class="form-group">
+                    <label>Select Product</label>
+                    <select id="saleProductId" required onchange="updateSaleSummary()"></select>
+                </div>
+                <!-- Product info card -->
+                <div id="saleProductInfo" style="display:none;margin:0 24px 8px;padding:12px 16px;
+                    background:#f0f7ff;border-radius:12px;border-left:4px solid #667eea;font-size:13px">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" id="saleQuantity" min="1" required oninput="updateSaleSummary()"
+                            placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Amount Paid (₹)</label>
+                        <input type="number" id="amountPaid" value="0" step="0.01" oninput="updateSaleSummary()">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Payment Method</label>
+                    <select id="paymentMethod">
+                        <option>Cash</option>
+                        <option>UPI</option>
+                        <option>Bank Transfer</option>
+                        <option>Credit (Due)</option>
+                    </select>
+                </div>
+                <!-- Live summary -->
+                <div id="saleSummary" style="margin:0 24px 4px;padding:14px 16px;
+                    background:#f3f4f6;border-radius:12px;font-size:13px;display:none">
+                </div>
+                <button type="submit" class="btn-submit" style="background:linear-gradient(135deg,#059669,#047857)">
+                    <i class="fas fa-check"></i> Confirm Sale
+                </button>
+            </form>
+        </div>
+    </div>
+    <!-- Collect Payment Modal -->
+    <div id="collectModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h2>💰 Collect Payment</h2>
+                    <div id="collectShopLabel" style="font-size:13px;color:#6c757d;margin-top:3px"></div>
+                </div>
+                <button class="modal-close" onclick="closeModal('collectModal')">&times;</button>
+            </div>
+            <form id="collectForm">
+                <input type="hidden" id="collectShopId">
+                <!-- Current pending display -->
+                <div id="collectPendingDisplay" style="margin:0 24px 12px;padding:18px 20px;
+                    background:linear-gradient(135deg,#fee2e2,#fecaca);
+                    border-radius:14px;text-align:center">
+                    <div style="font-size:12px;color:#dc2626;font-weight:600;text-transform:uppercase;
+                        letter-spacing:0.5px;margin-bottom:6px">Current Pending Amount</div>
+                    <div id="collectCurrentPending" style="font-size:32px;font-weight:800;color:#dc2626">₹0</div>
+                </div>
+                <!-- Quick full clear button -->
+                <div style="margin:0 24px 4px;display:flex;gap:8px">
+                    <button type="button" onclick="setFullPayment()" style="flex:1;padding:10px;background:#d1fae5;color:#059669;border:2px solid #6ee7b7;
+                        border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;transition:all 0.2s">
+                        ✅ Collect Full Amount
+                    </button>
+                    <button type="button" onclick="setZeroPending()" style="flex:1;padding:10px;background:#ede9fe;color:#7c3aed;border:2px solid #c4b5fd;
+                        border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;transition:all 0.2s">
+                        ❌ Clear All Dues
+                    </button>
+                </div>
+                <div style="margin:8px 24px;text-align:center;font-size:12px;color:#9ca3af">— or enter custom amount —
+                </div>
+                <div class="form-group">
+                    <label>Amount Collected Now (₹)</label>
+                    <input type="number" id="collectAmount" step="0.01" min="0" placeholder="0.00"
+                        oninput="updateCollectPreview()" style="font-size:18px;font-weight:700">
+                </div>
+                <!-- Live preview -->
+                <div id="collectPreview" style="display:none;margin:0 24px 8px;padding:12px 16px;
+                    background:#f0f9ff;border-radius:12px;font-size:13px">
+                </div>
+                <div class="form-group">
+                    <label>Payment Method</label>
+                    <select id="collectMethod">
+                        <option>Cash</option>
+                        <option>UPI</option>
+                        <option>Bank Transfer</option>
+                        <option>Cheque</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Note (optional)</label>
+                    <input type="text" id="collectNote" placeholder="e.g., Received via UPI 14-Jun">
+                </div>
+                <button type="submit" class="btn-submit" style="background:linear-gradient(135deg,#d97706,#b45309)">
+                    <i class="fas fa-hand-holding-usd"></i> Confirm Collection
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Message -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyAf7BW4dVnQrCbqj-0h3w2_eh1_0ZtVDX4",
+            authDomain: "distribution-management-f84b0.firebaseapp.com",
+            projectId: "distribution-management-f84b0",
+            storageBucket: "distribution-management-f84b0.firebasestorage.app",
+            messagingSenderId: "83025879405",
+            appId: "1:83025879405:web:1c509aa70ce215df85ba64",
+            measurementId: "G-E52GWKS0P5"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // Enable offline persistence
+        db.enablePersistence().catch(err => console.log('Persistence error:', err));
+
+        // Global variables
+        let map;
+        let markers = [];       // array of L.marker objects
+        let markerMap = {};     // shopId -> L.marker  (fixes index mismatch bug)
+        let allShops = [];
+        let allProducts = [];
+        let currentSelectedShop = null;
+        let isPickingLocation = false;
+        let tempSelectedLat = null;
+        let tempSelectedLng = null;
+
+        // DOM Elements
+        const loginScreen = document.getElementById('loginScreen');
+        const mainApp = document.getElementById('mainApp');
+        const loginForm = document.getElementById('loginForm');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const userEmailSpan = document.getElementById('userEmail');
+
+        // Auth State
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                loginScreen.style.display = 'none';
+                mainApp.style.display = 'block';
+                userEmailSpan.textContent = user.email;
+                await initializeMap();
+                await loadAllData();
+                setupSearch();
+            } else {
+                loginScreen.style.display = 'flex';
+                mainApp.style.display = 'none';
+            }
+        });
+
+        // Login
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+            const loginBtn = loginForm.querySelector('button[type="submit"]');
+            loginBtn.textContent = 'Logging in...';
+            loginBtn.disabled = true;
+            errorDiv.textContent = '';
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                errorDiv.textContent = '';
+            } catch (error) {
+                console.error('Login error:', error.code, error.message);
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    errorDiv.textContent = 'Invalid email or password. Check Firebase Auth users.';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorDiv.textContent = 'Invalid email format.';
+                } else if (error.code === 'auth/too-many-requests') {
+                    errorDiv.textContent = 'Too many failed attempts. Try again later.';
+                } else if (error.code === 'auth/network-request-failed') {
+                    errorDiv.textContent = 'Network error. Check your internet connection.';
+                } else {
+                    errorDiv.textContent = 'Error: ' + error.message;
+                }
+            } finally {
+                loginBtn.textContent = 'Login';
+                loginBtn.disabled = false;
+            }
+        });
+
+        // Logout
+        logoutBtn.addEventListener('click', () => auth.signOut());
+
+        // Initialize Map
+        async function initializeMap() {
+            map = L.map('map').setView([25.0961, 85.3131], 8); // Bihar, India
+
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; CartoDB',
+                subdomains: 'abcd',
+                maxZoom: 19
+            }).addTo(map);
+
+            // Add click handler for location picking
+            map.on('click', function (e) {
+                if (isPickingLocation) {
+                    tempSelectedLat = e.latlng.lat;
+                    tempSelectedLng = e.latlng.lng;
+                    document.getElementById('shopLat').value = tempSelectedLat;
+                    document.getElementById('shopLng').value = tempSelectedLng;
+                    document.getElementById('locationPreview').innerHTML = `
+                        <i class="fas fa-check-circle" style="color:#059669"></i>
+                        Selected: ${tempSelectedLat.toFixed(6)}, ${tempSelectedLng.toFixed(6)}
+                    `;
+
+                    // Add a temporary marker
+                    if (window.tempMarker) {
+                        map.removeLayer(window.tempMarker);
+                    }
+                    window.tempMarker = L.marker([tempSelectedLat, tempSelectedLng]).addTo(map)
+                        .bindPopup('📍 Selected Location').openPopup();
+
+                    stopPickingLocation(); // restores modal visibility
+                    showToast('✅ Location selected! Review and save the shop.');
+                }
+            });
+
+            // Add search control
+            const geocoder = L.Control.geocoder({
+                defaultMarkGeocode: false,
+                placeholder: 'Search for area...',
+                errorMessage: 'Location not found'
+            }).on('markgeocode', function (e) {
+                const bbox = e.geocode.bbox;
+                const center = e.geocode.center;
+                map.fitBounds(bbox);
+                if (isPickingLocation) {
+                    tempSelectedLat = center.lat;
+                    tempSelectedLng = center.lng;
+                    document.getElementById('shopLat').value = tempSelectedLat;
+                    document.getElementById('shopLng').value = tempSelectedLng;
+                    document.getElementById('locationPreview').innerHTML = `
+                        <i class="fas fa-check-circle" style="color:#059669"></i> 
+                        Selected: ${tempSelectedLat.toFixed(6)}, ${tempSelectedLng.toFixed(6)}
+                    `;
+                    if (window.tempMarker) map.removeLayer(window.tempMarker);
+                    window.tempMarker = L.marker([tempSelectedLat, tempSelectedLng]).addTo(map);
+                } else {
+                    showToast('Search result found. Click "Pick Location" mode to select this spot.');
+                }
+            }).addTo(map);
+        }
+
+        // Start picking location from map
+        // Hides the shop modal temporarily so the map is fully clickable
+        function startPickingLocation() {
+            isPickingLocation = true;
+            // Use display:none — visibility:hidden still blocks pointer events!
+            const shopModal = document.getElementById('shopModal');
+            shopModal._wasOpen = true;   // remember to restore it after picking
+            shopModal.style.display = 'none';
+
+            const btn = document.getElementById('pickLocationBtn');
+            btn.innerHTML = '<i class="fas fa-times"></i> Cancel - Click on Map to Set Location';
+            btn.classList.add('active');
+            document.getElementById('mapModeIndicator').innerHTML = '<i class="fas fa-crosshairs"></i> <span>📍 Pick Location Mode — Click anywhere on the map!</span>';
+            document.getElementById('mapModeIndicator').classList.add('active');
+
+            // Show a prominent floating cancel button over the map
+            let cancelBanner = document.getElementById('locationPickBanner');
+            if (!cancelBanner) {
+                cancelBanner = document.createElement('div');
+                cancelBanner.id = 'locationPickBanner';
+                cancelBanner.style.cssText = `
+                    position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+                    background: #667eea; color: white; padding: 12px 24px;
+                    border-radius: 40px; font-size: 14px; font-weight: 600;
+                    z-index: 2000; cursor: pointer; box-shadow: 0 4px 20px rgba(102,126,234,0.5);
+                    display: flex; align-items: center; gap: 10px;
+                `;
+                cancelBanner.innerHTML = '<i class="fas fa-map-marker-alt"></i> Click anywhere on map to set location &nbsp;|&nbsp; <span style="text-decoration:underline;">Cancel</span>';
+                cancelBanner.onclick = () => stopPickingLocation();
+                document.body.appendChild(cancelBanner);
+            }
+            cancelBanner.style.display = 'flex';
+
+            showToast('Click anywhere on the map to set shop location');
+        }
+
+        function stopPickingLocation() {
+            isPickingLocation = false;
+
+            // Restore modal — only re-show if it was open before picking
+            const shopModal = document.getElementById('shopModal');
+            if (shopModal._wasOpen) {
+                shopModal.style.display = 'flex';
+                shopModal._wasOpen = false;
+            }
+
+            // Hide cancel banner
+            const cancelBanner = document.getElementById('locationPickBanner');
+            if (cancelBanner) cancelBanner.style.display = 'none';
+
+            const btn = document.getElementById('pickLocationBtn');
+            if (btn) {
+                btn.innerHTML = '<i class="fas fa-map-marker-alt"></i> Click on Map to Set Location';
+                btn.classList.remove('active');
+            }
+            document.getElementById('mapModeIndicator').innerHTML = '<i class="fas fa-map-marker-alt"></i> <span>Normal Mode</span>';
+            document.getElementById('mapModeIndicator').classList.remove('active');
+        }
+
+        // Show toast message
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        // Load all data
+        async function loadAllData() {
+            await Promise.all([
+                loadShops(),
+                loadProducts(),
+                loadStats()
+            ]);
+        }
+
+        // Load Shops
+        async function loadShops() {
+            const snapshot = await db.collection('shops').orderBy('name').get();
+            allShops = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            // Clear existing markers
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+            markerMap = {};  // reset marker map
+
+            // Add markers for shops with coordinates
+            allShops.forEach(shop => {
+                if (shop.latitude && shop.longitude) {
+                    const lat = parseFloat(shop.latitude);
+                    const lng = parseFloat(shop.longitude);
+                    const marker = L.marker([lat, lng]).addTo(map);
+
+                    const pendingClass = (shop.pending_fees || 0) > 0 ? 'high' : 'low';
+                    const pendingText = (shop.pending_fees || 0) > 0 ? `₹${(shop.pending_fees || 0).toLocaleString()}` : 'No dues';
+
+                    const popupContent = `
+                        <div class="shop-popup" style="min-width: 200px;">
+                            <div class="popup-name">🏪 ${escapeHtml(shop.name)}</div>
+                            <div class="popup-detail"><i class="fas fa-user"></i> ${escapeHtml(shop.owner_name || 'No owner')}</div>
+                            <div class="popup-detail"><i class="fas fa-phone"></i> ${escapeHtml(shop.phone || 'No phone')}</div>
+                            <div class="popup-detail"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(shop.address || 'No address')}</div>
+                            <div class="popup-pending ${pendingClass}">
+                                <i class="fas fa-rupee-sign"></i> Pending: ${pendingText}
+                            </div>
+                            <button class="popup-sale-btn" onclick="openSaleForShop('${shop.id}', '${escapeHtml(shop.name)}')">
+                                <i class="fas fa-shopping-cart"></i> Quick Sale
+                            </button>
+                            <button class="popup-edit-btn" onclick="editShopFromMap('${shop.id}')">
+                                <i class="fas fa-edit"></i> Edit Location
+                            </button>
+                        </div>
+                    `;
+
+                    marker.bindPopup(popupContent);
+                    markers.push(marker);
+                    markerMap[shop.id] = marker;  // store by shopId for reliable lookup
+                }
+            });
+
+            if (markers.length > 0) {
+                const group = L.featureGroup(markers);
+                map.fitBounds(group.getBounds().pad(0.2));
+            }
+
+            renderShopsList();
+            document.getElementById('shopCount').textContent = `${allShops.length} shops`;
+        }
+
+        // Edit shop from map popup
+        window.editShopFromMap = async function (shopId) {
+            const shop = allShops.find(s => s.id === shopId);
+            if (shop) {
+                openShopModal(shop);
+                showToast('Click on map to update location');
+                startPickingLocation();
+            }
+        };
+
+        // Render shops list with search
+        function renderShopsList(searchTerm = '') {
+            const container = document.getElementById('shopsListContainer');
+            let filteredShops = allShops;
+
+            if (searchTerm) {
+                filteredShops = allShops.filter(shop =>
+                    shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (shop.owner_name && shop.owner_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                    (shop.address && shop.address.toLowerCase().includes(searchTerm.toLowerCase()))
+                );
+            }
+
+            if (filteredShops.length === 0) {
+                container.innerHTML = '<div class="loading">No shops found</div>';
+                return;
+            }
+
+            container.innerHTML = filteredShops.map(shop => `
+                <div class="shop-card" onclick="focusOnShop('${shop.id}')">
+                    <div class="shop-name">
+                        <span>${escapeHtml(shop.name)} 
+                            ${!shop.latitude || !shop.longitude ? '<span class="no-location-badge"><i class="fas fa-map-marker-alt"></i> No location</span>' : ''}
+                        </span>
+                        <span class="shop-pending ${(shop.pending_fees || 0) === 0 ? 'zero' : ''}">
+                            ₹${(shop.pending_fees || 0).toLocaleString()}
+                        </span>
+                    </div>
+                    <div class="shop-address">
+                        <i class="fas fa-map-marker-alt"></i> ${escapeHtml(shop.address || 'No address')}
+                    </div>
+                    <div class="shop-contact">
+                        <i class="fas fa-user"></i> ${escapeHtml(shop.owner_name || 'N/A')} &nbsp;|&nbsp;
+                        <i class="fas fa-phone"></i> ${escapeHtml(shop.phone || 'N/A')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Setup search
+        function setupSearch() {
+            const searchInput = document.getElementById('searchShops');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    renderShopsList(e.target.value);
+                });
+            }
+        }
+
+        // Focus on shop — uses markerMap (by shopId) to avoid index mismatch
+        window.focusOnShop = function (shopId) {
+            const shop = allShops.find(s => s.id === shopId);
+            if (shop && shop.latitude && shop.longitude) {
+                map.setView([parseFloat(shop.latitude), parseFloat(shop.longitude)], 16);
+                if (markerMap[shopId]) {
+                    markerMap[shopId].openPopup();
+                }
+            } else if (shop) {
+                showToast(`${shop.name} has no location set. Edit to add location.`);
+            }
+        };
+
+        // Load Products
+        async function loadProducts() {
+            const snapshot = await db.collection('products').orderBy('name').get();
+            allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        }
+
+        // Load Stats
+        async function loadStats() {
+            const shopsSnap = await db.collection('shops').get();
+            const salesSnap = await db.collection('sales').get();
+
+            const totalShops = shopsSnap.size;
+            const totalPending = shopsSnap.docs.reduce((sum, doc) => sum + (doc.data().pending_fees || 0), 0);
+            const totalSales = salesSnap.docs.reduce((sum, doc) => sum + (doc.data().total || 0), 0);
+
+            document.getElementById('statShops').textContent = totalShops;
+            document.getElementById('statPending').textContent = `₹${totalPending.toLocaleString()}`;
+            document.getElementById('statSales').textContent = `₹${totalSales.toLocaleString()}`;
+        }
+
+        // Open Sale — shows shop type badge and units in product dropdown
+        window.openSaleForShop = function (shopId, shopName) {
+            const shop = allShops.find(s => s.id === shopId);
+            currentSelectedShop = { id: shopId, name: shopName };
+            document.getElementById('saleShopId').value = shopId;
+            document.getElementById('saleShopName').value = shopName;
+
+            // Show shop type badge under title
+            const badge = document.getElementById('saleShopBadge');
+            if (badge && shop?.shop_type) {
+                const typeColors = { Wholesaler: '#7c3aed', Retailer: '#2563eb', Both: '#059669' };
+                badge.innerHTML = `<span style="background:${typeColors[shop.shop_type] || '#667eea'}20;
+                    color:${typeColors[shop.shop_type] || '#667eea'};padding:2px 10px;
+                    border-radius:20px;font-weight:600">${shop.shop_type}</span>`;
+            }
+
+            // Populate products with unit info
+            const productSelect = document.getElementById('saleProductId');
+            productSelect.innerHTML = '<option value="">-- Select a product --</option>';
+            allProducts.forEach(p => {
+                const unitLabel = p.unit ? `/${p.unit}` : '/pc';
+                const stock = p.stock || 0;
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.dataset.price = p.selling_price || 0;
+                opt.dataset.cost = p.cost_price || 0;
+                opt.dataset.stock = stock;
+                opt.dataset.unit = p.unit || 'piece';
+                opt.textContent = `${p.name}  —  ₹${p.selling_price || 0}${unitLabel}  (Stock: ${stock})`;
+                if (stock === 0) opt.disabled = true;
+                productSelect.appendChild(opt);
+            });
+
+            // Reset fields
+            document.getElementById('saleQuantity').value = '';
+            document.getElementById('amountPaid').value = '0';
+            document.getElementById('saleProductInfo').style.display = 'none';
+            document.getElementById('saleSummary').style.display = 'none';
+            document.getElementById('saleModal').style.display = 'flex';
+        };
+
+        function updateSaleSummary() {
+            const productSelect = document.getElementById('saleProductId');
+            const selectedOpt = productSelect?.options[productSelect.selectedIndex];
+            const quantity = parseInt(document.getElementById('saleQuantity')?.value) || 0;
+            const amountPaid = parseFloat(document.getElementById('amountPaid')?.value) || 0;
+
+            if (!selectedOpt?.value) {
+                document.getElementById('saleProductInfo').style.display = 'none';
+                document.getElementById('saleSummary').style.display = 'none';
+                return;
+            }
+
+            const price = parseFloat(selectedOpt.dataset.price) || 0;
+            const cost = parseFloat(selectedOpt.dataset.cost) || 0;
+            const stock = parseInt(selectedOpt.dataset.stock) || 0;
+            const unit = selectedOpt.dataset.unit || 'piece';
+            const total = price * quantity;
+            const pending = total - amountPaid;
+            const margin = cost > 0 ? Math.round(((price - cost) / cost) * 100) : 0;
+
+            // Product info card
+            const infoDiv = document.getElementById('saleProductInfo');
+            infoDiv.style.display = 'block';
+            infoDiv.innerHTML = `
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+                    <div><span style="color:#6c757d;font-size:11px">COST / ${unit.toUpperCase()}</span><br>
+                        <strong>₹${cost.toLocaleString()}</strong></div>
+                    <div><span style="color:#6c757d;font-size:11px">SELL / ${unit.toUpperCase()}</span><br>
+                        <strong style="color:#059669">₹${price.toLocaleString()}</strong></div>
+                    <div><span style="color:#6c757d;font-size:11px">IN STOCK</span><br>
+                        <strong style="color:${stock < 10 ? '#dc2626' : '#374151'}">${stock} ${unit}s</strong></div>
+                </div>
+                <div style="margin-top:6px;font-size:11px;color:#7c3aed">Margin: ${margin}%</div>
+            `;
+
+            // Live summary
+            const summary = document.getElementById('saleSummary');
+            if (quantity > 0) {
+                summary.style.display = 'block';
+                summary.innerHTML = `
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                        <div>₹${price.toLocaleString()} × ${quantity} ${unit}s</div>
+                        <div style="text-align:right"><strong>Total: ₹${total.toLocaleString()}</strong></div>
+                        <div style="color:#059669">Paid: ₹${amountPaid.toLocaleString()}</div>
+                        <div style="text-align:right;color:${pending > 0 ? '#dc2626' : '#059669'}">
+                            ${pending > 0 ? 'Pending: ₹' + pending.toLocaleString() : '✅ Fully Paid'}
+                        </div>
+                    </div>
+                `;
+            } else {
+                summary.style.display = 'none';
+            }
+        }
+
+        // Process Sale
+        document.getElementById('saleForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const shopId = document.getElementById('saleShopId').value;
+            const productId = document.getElementById('saleProductId').value;
+            const quantity = parseInt(document.getElementById('saleQuantity').value);
+            const amountPaid = parseFloat(document.getElementById('amountPaid').value) || 0;
+            const paymentMethod = document.getElementById('paymentMethod').value;
+
+            if (!shopId || !productId || !quantity) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            try {
+                const productDoc = await db.collection('products').doc(productId).get();
+                const product = productDoc.data();
+
+                if ((product.stock || 0) < quantity) {
+                    alert('Insufficient stock!');
+                    return;
+                }
+
+                const totalAmount = product.selling_price * quantity;
+                const pendingAmount = totalAmount - amountPaid;
+                const paymentStatus = pendingAmount === 0 ? 'Paid' : pendingAmount === totalAmount ? 'Pending' : 'Partial';
+
+                const batch = db.batch();
+                batch.update(db.collection('products').doc(productId), {
+                    stock: (product.stock || 0) - quantity
+                });
+
+                const shopRef = db.collection('shops').doc(shopId);
+                const shopDoc = await shopRef.get();
+                batch.update(shopRef, {
+                    pending_fees: (shopDoc.data()?.pending_fees || 0) + pendingAmount
+                });
+
+                batch.set(db.collection('sales').doc(), {
+                    shopId, productId, quantity,
+                    unitPrice: product.selling_price,
+                    total: totalAmount,
+                    amountPaid, pendingAmount,
+                    paymentStatus, paymentMethod,
+                    date: new Date().toLocaleDateString('en-IN'),
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                await batch.commit();
+                showToast('Sale processed successfully!');
+                closeModal('saleModal');
+                await loadAllData();
+            } catch (error) {
+                console.error(error);
+                alert('Error: ' + error.message);
+            }
+        });
+
+        // Shop CRUD
+        document.getElementById('shopForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('shopId').value;
+            const data = {
+                name: document.getElementById('shopName').value,
+                owner_name: document.getElementById('ownerName').value,
+                shop_type: document.getElementById('shopType').value,
+                phone: document.getElementById('shopPhone').value,
+                address: document.getElementById('shopAddress').value,
+                latitude: document.getElementById('shopLat').value || null,
+                longitude: document.getElementById('shopLng').value || null,
+                pending_fees: parseFloat(document.getElementById('shopPendingFees').value) || 0,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            if (id) {
+                await db.collection('shops').doc(id).update(data);
+                showToast('Shop updated successfully!');
+            } else {
+                data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                await db.collection('shops').add(data);
+                showToast('Shop added successfully!');
+            }
+            stopPickingLocation();
+            closeModal('shopModal');
+            await loadAllData();
+        });
+
+        // Product CRUD
+        document.getElementById('productForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('productId').value;
+            const data = {
+                name: document.getElementById('productName').value,
+                category: document.getElementById('productCategory').value,
+                unit: document.getElementById('productUnit').value,
+                cost_price: parseFloat(document.getElementById('costPrice').value) || 0,
+                selling_price: parseFloat(document.getElementById('sellingPrice').value) || 0,
+                stock: parseInt(document.getElementById('productStock').value) || 0,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            if (id) {
+                await db.collection('products').doc(id).update(data);
+                showToast('Product updated!');
+            } else {
+                data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                await db.collection('products').add(data);
+                showToast('Product added!');
+            }
+            closeModal('productModal');
+            await loadProducts();
+        });
+
+        // Modal functions
+        window.openShopModal = (shop = null) => {
+            document.getElementById('shopModalTitle').textContent = shop ? 'Edit Shop' : 'Add New Shop';
+            document.getElementById('shopId').value = shop?.id || '';
+            document.getElementById('shopName').value = shop?.name || '';
+            document.getElementById('ownerName').value = shop?.owner_name || '';
+            document.getElementById('shopType').value = shop?.shop_type || 'Retailer';
+            document.getElementById('shopPhone').value = shop?.phone || '';
+            document.getElementById('shopAddress').value = shop?.address || '';
+            document.getElementById('shopLat').value = shop?.latitude || '';
+            document.getElementById('shopLng').value = shop?.longitude || '';
+            document.getElementById('shopPendingFees').value = shop?.pending_fees || 0;
+
+            if (shop?.latitude && shop?.longitude) {
+                document.getElementById('locationPreview').innerHTML = `
+                    <i class="fas fa-map-marker-alt"></i>
+                    Current: ${shop.latitude}, ${shop.longitude}
+                `;
+            } else {
+                document.getElementById('locationPreview').innerHTML = 'No location set. Click "Pick Location" to select on map.';
+            }
+            document.getElementById('shopModal').style.display = 'flex';
+            const pickBtn = document.getElementById('pickLocationBtn');
+            pickBtn.onclick = () => isPickingLocation ? stopPickingLocation() : startPickingLocation();
+        };
+
+        window.openProductModal = () => {
+            document.getElementById('productId').value = '';
+            document.getElementById('productName').value = '';
+            document.getElementById('productCategory').value = 'Pipes & Fittings';
+            document.getElementById('productUnit').value = 'piece';
+            document.getElementById('costPrice').value = '';
+            document.getElementById('sellingPrice').value = '';
+            document.getElementById('productStock').value = '0';
+            document.getElementById('productModal').style.display = 'flex';
+        };
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            stopPickingLocation();
+            if (window.tempMarker) {
+                map.removeLayer(window.tempMarker);
+                window.tempMarker = null;
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>]/g, function (m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        // Button handlers
+        document.getElementById('addShopBtn')?.addEventListener('click', () => openShopModal());
+        document.getElementById('addProductBtn')?.addEventListener('click', () => openProductModal());
+
+        // Mobile panel swipe
+        let touchStart = 0;
+        document.querySelector('.map-section')?.addEventListener('touchstart', (e) => {
+            touchStart = e.touches[0].clientY;
+        });
+        document.querySelector('.map-section')?.addEventListener('touchend', (e) => {
+            const touchEnd = e.changedTouches[0].clientY;
+            if (touchStart - touchEnd > 50) {
+                document.getElementById('sidePanel').classList.add('open');
+            } else if (touchEnd - touchStart > 50) {
+                document.getElementById('sidePanel').classList.remove('open');
+            }
+        });
+
+        // ══════════════════════════════════════════
+        //  SECTION NAVIGATION
+        // ══════════════════════════════════════════
+        function showSection(name) {
+            ['map', 'shops', 'products', 'sales'].forEach(s => {
+                document.getElementById('section-' + s).classList.toggle('active', s === name);
+                const tab = document.getElementById('tab-' + s);
+                if (tab) tab.classList.toggle('active', s === name);
+            });
+            if (name === 'shops') renderShopsTable();
+            if (name === 'products') renderProductsTable();
+            if (name === 'sales') loadAndRenderSales();
+        }
+
+        // ══════════════════════════════════════════
+        //  SHOPS TABLE
+        // ══════════════════════════════════════════
+        function renderShopsTable(filter = '') {
+            const tbody = document.getElementById('shopsTableBody');
+            if (!tbody) return;
+            const q = filter.toLowerCase();
+            const rows = allShops.filter(s =>
+                !q ||
+                (s.name || '').toLowerCase().includes(q) ||
+                (s.owner_name || '').toLowerCase().includes(q) ||
+                (s.address || '').toLowerCase().includes(q) ||
+                (s.phone || '').toLowerCase().includes(q)
+            );
+
+            // Update stats
+            const withGps = allShops.filter(s => s.latitude && s.longitude).length;
+            const totalPending = allShops.reduce((a, s) => a + (s.pending_fees || 0), 0);
+            document.getElementById('sc-totalShops').textContent = allShops.length;
+            document.getElementById('sc-totalPending').textContent = '₹' + totalPending.toLocaleString();
+            document.getElementById('sc-shopsGps').textContent = withGps;
+
+            if (rows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8">
+                    <div class="empty-state"><i class="fas fa-store"></i><p>No shops found</p></div>
+                </td></tr>`;
+                return;
+            }
+            tbody.innerHTML = rows.map((s, i) => {
+                const pending = s.pending_fees || 0;
+                const pendingClass = pending > 0 ? 'badge-due' : 'badge-paid';
+                const pendingText = pending > 0 ? '₹' + pending.toLocaleString() : '₹0';
+                const hasGps = s.latitude && s.longitude;
+                const typeColors = { Wholesaler: '#7c3aed', Retailer: '#2563eb', Both: '#059669' };
+                const typeColor = typeColors[s.shop_type] || '#6c757d';
+                const typeLabel = s.shop_type || 'Retailer';
+                return `<tr>
+                    <td style="color:#9ca3af;font-weight:600">${i + 1}</td>
+                    <td><strong>${escapeHtml(s.name)}</strong></td>
+                    <td>${escapeHtml(s.owner_name || '—')}</td>
+                    <td><span class="badge" style="background:${typeColor}20;color:${typeColor}">${typeLabel}</span></td>
+                    <td>${escapeHtml(s.phone || '—')}</td>
+                    <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(s.address || '—')}</td>
+                    <td><span class="badge ${pendingClass}">${pendingText}</span></td>
+                    <td>${hasGps
+                        ? '<span class="badge badge-paid"><i class="fas fa-map-marker-alt"></i> Set</span>'
+                        : '<span class="badge badge-due">No GPS</span>'}</td>
+                    <td style="white-space:nowrap">
+                        <button class="btn-xs btn-edit" onclick="openShopModal(allShops.find(x=>x.id==='${s.id}'))"><i class="fas fa-edit"></i> Edit</button>
+                        <button class="btn-xs btn-sale" onclick="openSaleForShop('${s.id}','${escapeHtml(s.name)}')"><i class="fas fa-shopping-cart"></i> Sell</button>
+                        ${pending > 0 ? `<button class="btn-xs btn-collect" onclick="openCollectModal('${s.id}','${escapeHtml(s.name)}',${pending})"><i class="fas fa-hand-holding-usd"></i> ₹Collect</button>` : ''}
+                        <button class="btn-xs btn-del"  onclick="deleteShop('${s.id}','${escapeHtml(s.name)}')"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        window.deleteShop = async function (id, name) {
+            if (!confirm(`Delete shop "${name}"? This cannot be undone.`)) return;
+            try {
+                await db.collection('shops').doc(id).delete();
+                showToast('Shop deleted.');
+                await loadAllData();
+                renderShopsTable(document.getElementById('shopsTableSearch')?.value || '');
+            } catch (e) { alert('Error: ' + e.message); }
+        };
+
+        // ══════════════════════════════════════════
+        //  COLLECT PAYMENT
+        // ══════════════════════════════════════════
+        let _collectPending = 0;
+
+        window.openCollectModal = function (shopId, shopName, pendingAmt) {
+            _collectPending = pendingAmt;
+            document.getElementById('collectShopId').value = shopId;
+            document.getElementById('collectShopLabel').textContent = shopName;
+            document.getElementById('collectCurrentPending').textContent = '₹' + pendingAmt.toLocaleString();
+            document.getElementById('collectAmount').value = '';
+            document.getElementById('collectNote').value = '';
+            document.getElementById('collectPreview').style.display = 'none';
+            // Red if there is due, green if zero
+            document.getElementById('collectPendingDisplay').style.background =
+                pendingAmt > 0
+                    ? 'linear-gradient(135deg,#fee2e2,#fecaca)'
+                    : 'linear-gradient(135deg,#d1fae5,#a7f3d0)';
+            document.getElementById('collectCurrentPending').style.color =
+                pendingAmt > 0 ? '#dc2626' : '#059669';
+            document.getElementById('collectModal').style.display = 'flex';
+        };
+
+        window.setFullPayment = function () {
+            document.getElementById('collectAmount').value = _collectPending;
+            updateCollectPreview();
+        };
+
+        window.setZeroPending = function () {
+            // Directly set pending to 0 without entering amount
+            document.getElementById('collectAmount').value = _collectPending;
+            updateCollectPreview();
+            document.getElementById('collectNote').value = 'Dues cleared manually';
+        };
+
+        window.updateCollectPreview = function () {
+            const amt = parseFloat(document.getElementById('collectAmount').value) || 0;
+            const preview = document.getElementById('collectPreview');
+            if (amt <= 0) { preview.style.display = 'none'; return; }
+            const remaining = Math.max(0, _collectPending - amt);
+            const over = amt > _collectPending ? amt - _collectPending : 0;
+            preview.style.display = 'block';
+            preview.innerHTML = `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                    <div style="color:#6c757d">Collecting</div>
+                    <div style="text-align:right;font-weight:700;color:#059669">₹${amt.toLocaleString()}</div>
+                    <div style="color:#6c757d">Remaining Pending</div>
+                    <div style="text-align:right;font-weight:700;color:${remaining > 0 ? '#dc2626' : '#059669'}">
+                        ${remaining > 0 ? '₹' + remaining.toLocaleString() : '✅ Cleared!'}
+                    </div>
+                    ${over > 0 ? `<div style="color:#d97706;font-size:12px;grid-column:1/-1">⚠️ Advance of ₹${over.toLocaleString()} will be noted</div>` : ''}
+                </div>`;
+        };
+
+        document.getElementById('collectForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const shopId = document.getElementById('collectShopId').value;
+            const amt = parseFloat(document.getElementById('collectAmount').value) || 0;
+            const method = document.getElementById('collectMethod').value;
+            const note = document.getElementById('collectNote').value;
+
+            if (amt <= 0) { alert('Enter a valid amount.'); return; }
+
+            try {
+                const shopRef = db.collection('shops').doc(shopId);
+                const shopDoc = await shopRef.get();
+                const curPending = shopDoc.data()?.pending_fees || 0;
+                const newPending = Math.max(0, curPending - amt);
+
+                await shopRef.update({ pending_fees: newPending });
+
+                // Log payment record
+                await db.collection('payments').add({
+                    shopId,
+                    shopName: document.getElementById('collectShopLabel').textContent,
+                    amountCollected: amt,
+                    previousPending: curPending,
+                    newPending,
+                    paymentMethod: method,
+                    note,
+                    date: new Date().toLocaleDateString('en-IN'),
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                showToast(`✅ ₹${amt.toLocaleString()} collected! Remaining: ₹${newPending.toLocaleString()}`);
+                closeModal('collectModal');
+                await loadAllData();
+                renderShopsTable(document.getElementById('shopsTableSearch')?.value || '');
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        });
+
+        // ══════════════════════════════════════════
+        //  PRODUCTS TABLE
+        // ══════════════════════════════════════════
+        function renderProductsTable(filter = '') {
+            const tbody = document.getElementById('productsTableBody');
+            if (!tbody) return;
+            const q = filter.toLowerCase();
+            const rows = allProducts.filter(p =>
+                !q ||
+                (p.name || '').toLowerCase().includes(q) ||
+                (p.category || '').toLowerCase().includes(q)
+            );
+
+            // Update stats
+            const lowStock = allProducts.filter(p => (p.stock || 0) < 10).length;
+            const stockValue = allProducts.reduce((a, p) => a + ((p.cost_price || 0) * (p.stock || 0)), 0);
+            document.getElementById('sc-totalProducts').textContent = allProducts.length;
+            document.getElementById('sc-lowStock').textContent = lowStock;
+            document.getElementById('sc-stockValue').textContent = '₹' + stockValue.toLocaleString();
+
+            if (rows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8">
+                    <div class="empty-state"><i class="fas fa-boxes"></i><p>No products found</p></div>
+                </td></tr>`;
+                return;
+            }
+            tbody.innerHTML = rows.map((p, i) => {
+                const margin = p.selling_price && p.cost_price
+                    ? Math.round(((p.selling_price - p.cost_price) / p.cost_price) * 100)
+                    : 0;
+                const stockClass = (p.stock || 0) < 10 ? 'badge-low' : 'badge-ok';
+                const unit = p.unit || 'piece';
+                return `<tr>
+                    <td style="color:#9ca3af;font-weight:600">${i + 1}</td>
+                    <td><strong>${escapeHtml(p.name)}</strong></td>
+                    <td><span class="badge badge-cat">${escapeHtml(p.category || 'Other')}</span></td>
+                    <td style="color:#6c757d;font-size:12px">${unit}</td>
+                    <td>₹${(p.cost_price || 0).toLocaleString()}</td>
+                    <td><strong>₹${(p.selling_price || 0).toLocaleString()}</strong></td>
+                    <td><span style="color:${margin >= 0 ? '#059669' : '#dc2626'};font-weight:600">${margin}%</span></td>
+                    <td><span class="badge ${stockClass}">${p.stock || 0} ${unit}s</span></td>
+                    <td style="white-space:nowrap">
+                        <button class="btn-xs btn-edit" onclick="editProduct('${p.id}')"><i class="fas fa-edit"></i> Edit</button>
+                        <button class="btn-xs btn-del"  onclick="deleteProduct('${p.id}','${escapeHtml(p.name)}')"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        window.editProduct = function (id) {
+            const p = allProducts.find(x => x.id === id);
+            if (!p) return;
+            document.getElementById('productId').value = p.id;
+            document.getElementById('productName').value = p.name;
+            document.getElementById('productCategory').value = p.category || 'Pipes & Fittings';
+            document.getElementById('productUnit').value = p.unit || 'piece';
+            document.getElementById('costPrice').value = p.cost_price || '';
+            document.getElementById('sellingPrice').value = p.selling_price || '';
+            document.getElementById('productStock').value = p.stock || 0;
+            document.getElementById('productModal').style.display = 'flex';
+        };
+
+        window.deleteProduct = async function (id, name) {
+            if (!confirm(`Delete product "${name}"? This cannot be undone.`)) return;
+            try {
+                await db.collection('products').doc(id).delete();
+                showToast('Product deleted.');
+                await loadProducts();
+                renderProductsTable(document.getElementById('productsTableSearch')?.value || '');
+            } catch (e) { alert('Error: ' + e.message); }
+        };
+
+        // ══════════════════════════════════════════
+        //  SALES TABLE
+        // ══════════════════════════════════════════
+        let allSales = [];
+
+        async function loadAndRenderSales() {
+            document.getElementById('salesTableBody').innerHTML =
+                '<tr><td colspan="10" style="text-align:center;padding:40px;color:#9ca3af"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
+            try {
+                const snap = await db.collection('sales').orderBy('timestamp', 'desc').get();
+                allSales = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderSalesTable(document.getElementById('salesTableSearch')?.value || '');
+            } catch (e) {
+                document.getElementById('salesTableBody').innerHTML =
+                    `<tr><td colspan="10" style="text-align:center;padding:40px;color:#dc2626">Error loading sales: ${e.message}</td></tr>`;
+            }
+        }
+
+        function renderSalesTable(filter = '') {
+            const tbody = document.getElementById('salesTableBody');
+            if (!tbody) return;
+            const q = filter.toLowerCase();
+
+            // Build shop/product name lookup
+            const shopMap = Object.fromEntries(allShops.map(s => [s.id, s.name]));
+            const productMap = Object.fromEntries(allProducts.map(p => [p.id, p.name]));
+
+            const rows = allSales.filter(s => {
+                if (!q) return true;
+                const sName = (shopMap[s.shopId] || '').toLowerCase();
+                const pName = (productMap[s.productId] || '').toLowerCase();
+                return sName.includes(q) || pName.includes(q) || (s.paymentStatus || '').toLowerCase().includes(q);
+            });
+
+            // Update stats
+            const totalCollected = allSales.reduce((a, s) => a + (s.amountPaid || 0), 0);
+            const totalPendingS = allSales.reduce((a, s) => a + (s.pendingAmount || 0), 0);
+            document.getElementById('sc-totalTxn').textContent = allSales.length;
+            document.getElementById('sc-collected').textContent = '₹' + totalCollected.toLocaleString();
+            document.getElementById('sc-salesPending').textContent = '₹' + totalPendingS.toLocaleString();
+
+            if (rows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10">
+                    <div class="empty-state"><i class="fas fa-receipt"></i><p>No sales found</p></div>
+                </td></tr>`;
+                return;
+            }
+
+            const statusClass = { 'Paid': 'badge-paid', 'Partial': 'badge-partial', 'Pending': 'badge-due' };
+            tbody.innerHTML = rows.map(s => `<tr>
+                <td style="white-space:nowrap">${s.date || '—'}</td>
+                <td><strong>${escapeHtml(shopMap[s.shopId] || s.shopId || '—')}</strong></td>
+                <td>${escapeHtml(productMap[s.productId] || s.productId || '—')}</td>
+                <td style="text-align:center">${s.quantity || 0}</td>
+                <td>₹${(s.unitPrice || 0).toLocaleString()}</td>
+                <td><strong>₹${(s.total || 0).toLocaleString()}</strong></td>
+                <td style="color:#059669">₹${(s.amountPaid || 0).toLocaleString()}</td>
+                <td style="color:#dc2626">₹${(s.pendingAmount || 0).toLocaleString()}</td>
+                <td>${escapeHtml(s.paymentMethod || '—')}</td>
+                <td><span class="badge ${statusClass[s.paymentStatus] || 'badge-due'}">${s.paymentStatus || 'Pending'}</span></td>
+            </tr>`).join('');
+        }
+    </script>
+</body>
+
+</html>
