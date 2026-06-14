@@ -185,13 +185,19 @@
             flex: 1;
             overflow: hidden;
             gap: 0;
+            background: #f0f2f5;
         }
 
         /* Map Section */
         .map-section {
             flex: 2;
             position: relative;
-            background: #e8e8e8;
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 16px;
+            overflow: hidden;
+            margin: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
         }
 
         #map {
@@ -232,8 +238,11 @@
             background: white;
             display: flex;
             flex-direction: column;
-            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.05);
-            overflow-y: auto;
+            border: 1px solid #e9ecef;
+            border-radius: 16px;
+            margin: 16px 16px 16px 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            overflow: hidden;
         }
 
         /* Stats Bar */
@@ -338,13 +347,20 @@
             padding: 12px;
             margin-bottom: 10px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
 
         .shop-card:hover {
             border-color: #667eea;
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
-            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+            transform: translateX(4px) scale(1.01);
+        }
+
+        .shop-card.glow-enlarge {
+            border-color: #667eea !important;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.25) !important;
+            transform: translateX(8px) scale(1.03) !important;
+            background: #f8f7ff !important;
         }
 
         .shop-card.active {
@@ -559,28 +575,52 @@
             color: #059669;
         }
 
+        .shop-popup-buttons {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
         .popup-sale-btn {
-            width: 100%;
+            flex: 1;
             padding: 8px;
             background: #667eea;
             color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            margin-top: 8px;
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: all 0.2s;
+        }
+
+        .popup-sale-btn:hover {
+            background: #5a6fd6;
         }
 
         .popup-edit-btn {
-            width: 100%;
+            flex: 1;
             padding: 8px;
             background: #f3f4f6;
             color: #374151;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            margin-top: 4px;
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: all 0.2s;
+        }
+
+        .popup-edit-btn:hover {
+            background: #e5e7eb;
         }
 
         /* Toast Message */
@@ -625,43 +665,90 @@
             border-radius: 3px;
         }
 
-        /* Responsive */
+        /* Responsive Auto-adjust Styles (pre-mobile breakpoints) */
+        @media (max-width: 1024px) {
+            .user-email {
+                display: none !important;
+                /* Hide user email early to conserve horizontal header space */
+            }
+        }
+
+        @media (max-width: 950px) {
+            .top-bar {
+                padding: 10px 16px;
+            }
+
+            .logo {
+                font-size: 18px;
+                gap: 8px;
+            }
+
+            .nav-tab {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 850px) {
+            .logo span {
+                display: none;
+                /* Hide logo text, only show icon to fit tabs cleanly */
+            }
+
+            .nav-tab {
+                padding: 8px 10px;
+                font-size: 11px;
+            }
+        }
+
+        /* Mobile Viewport Splits & Adjustments */
         @media (max-width: 768px) {
-            .side-panel {
-                width: 100%;
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                height: 50%;
-                z-index: 50;
-                border-radius: 20px 20px 0 0;
-                transform: translateY(calc(100% - 60px));
-                transition: transform 0.3s ease;
-            }
-
-            .side-panel.open {
-                transform: translateY(0);
-            }
-
-            .side-panel::before {
-                content: '';
-                position: absolute;
-                top: 10px;
-                left: 50%;
-                transform: translateX(-50%);
-                width: 40px;
-                height: 4px;
-                background: #cbd5e1;
-                border-radius: 2px;
+            .main-layout {
+                flex-direction: column !important;
+                height: calc(100vh - 110px) !important;
+                /* Total height minus top bar and bottom nav */
+                overflow: hidden !important;
             }
 
             .map-section {
-                flex: 1;
+                height: 40% !important;
+                /* Split: Map takes top 40% of the screen */
+                flex: none !important;
+                width: 100% !important;
+            }
+
+            #map {
+                height: 100% !important;
+                width: 100% !important;
+            }
+
+            .side-panel {
+                width: 100% !important;
+                height: 60% !important;
+                /* Split: Drawer takes bottom 60% of the screen */
+                position: relative !important;
+                bottom: 0 !important;
+                transform: none !important;
+                box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05) !important;
+                z-index: 50 !important;
+                border-radius: 20px 20px 0 0 !important;
+                overflow: hidden !important;
+                background: white;
+            }
+
+            .shops-list {
+                padding-bottom: 40px !important;
+                /* Cushion so you can scroll all the way to the last item */
+            }
+
+            .side-panel::before {
+                display: none !important;
+                /* Hide collapse/expand drag handle indicator */
             }
 
             .stats-bar {
                 gap: 8px;
+                padding-top: 16px !important;
             }
 
             .stat-number {
@@ -675,6 +762,240 @@
             .action-btn {
                 padding: 10px;
                 font-size: 12px;
+            }
+
+            /* Leaflet Mobile Popup Optimizations */
+            .leaflet-popup-content-wrapper {
+                border-radius: 12px !important;
+                padding: 1px !important;
+            }
+
+            .leaflet-popup-content {
+                margin: 8px 12px !important;
+                width: 190px !important;
+            }
+
+            .custom-popup .shop-popup {
+                min-width: unset !important;
+                max-width: 100% !important;
+            }
+
+            .popup-name {
+                font-size: 14px !important;
+                margin-bottom: 4px !important;
+            }
+
+            .popup-detail {
+                font-size: 11px !important;
+                margin: 2px 0 !important;
+                gap: 4px !important;
+            }
+
+            .popup-pending {
+                margin: 4px 0 !important;
+                padding: 4px !important;
+                font-size: 11px !important;
+            }
+
+            .shop-popup-buttons {
+                margin-top: 6px !important;
+                gap: 4px !important;
+            }
+
+            .popup-sale-btn,
+            .popup-edit-btn {
+                padding: 6px 4px !important;
+                font-size: 10px !important;
+                border-radius: 6px !important;
+            }
+
+            /* Header and Bottom Navigation */
+            .top-bar {
+                padding: 10px 16px;
+            }
+
+            .user-info {
+                gap: 8px;
+            }
+
+            .user-email {
+                display: none !important;
+                /* Hide user email on mobile to save space */
+            }
+
+            .logout-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+                border-radius: 16px;
+            }
+
+            .nav-tabs {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: white;
+                padding: 8px 12px;
+                box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08);
+                border-radius: 0;
+                z-index: 1000;
+                display: flex;
+                justify-content: space-around;
+                gap: 0;
+                border-top: 1px solid #e9ecef;
+            }
+
+            .nav-tab {
+                flex: 1;
+                flex-direction: column;
+                gap: 4px;
+                font-size: 10px;
+                font-weight: 600;
+                border-radius: 0;
+                background: transparent;
+                color: #6c757d;
+                box-shadow: none !important;
+                padding: 4px 0;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .nav-tab.active {
+                background: transparent;
+                color: #667eea;
+                -webkit-background-clip: unset;
+                -webkit-text-fill-color: initial;
+            }
+
+            .nav-tab i {
+                font-size: 18px;
+            }
+
+            /* Scrollable pages padding */
+            .data-page {
+                padding-bottom: 80px !important;
+                /* Ensure content doesn't hide behind bottom nav */
+            }
+
+            /* Responsive Tables (converting to clean visual cards) */
+            .data-table,
+            .data-table thead,
+            .data-table tbody,
+            .data-table th,
+            .data-table td,
+            .data-table tr {
+                display: block;
+            }
+
+            .data-table thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+
+            .data-table tr {
+                margin-bottom: 16px;
+                background: white;
+                border: 1px solid #e9ecef;
+                border-radius: 16px;
+                padding: 16px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+            }
+
+            .data-table td {
+                border: none;
+                border-bottom: 1px solid #f1f3f5;
+                position: relative;
+                padding-left: 45% !important;
+                text-align: right !important;
+                font-size: 13px;
+                padding-top: 10px !important;
+                padding-bottom: 10px !important;
+                min-height: 40px;
+                display: flex;
+                justify-content: flex-end;
+                align-items: center;
+                word-break: break-word;
+            }
+
+            .data-table td:last-child {
+                border-bottom: 0;
+                justify-content: center;
+                /* Center action buttons */
+                padding-left: 0 !important;
+                text-align: center !important;
+                display: flex;
+                flex-wrap: wrap;
+                margin-top: 8px;
+                gap: 6px;
+            }
+
+            .data-table td::before {
+                content: attr(data-label);
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                left: 16px;
+                width: 40%;
+                text-align: left;
+                font-weight: 700;
+                color: #6c757d;
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .data-table td:last-child::before {
+                display: none;
+                /* Hide label for final actions cell */
+            }
+
+            .btn-xs {
+                margin: 2px;
+                padding: 8px 12px;
+                /* Enlarge tap target on mobile */
+                font-size: 12px;
+                flex-grow: 1;
+                justify-content: center;
+            }
+
+            /* Responsive Stats Grid stack */
+            .stats-row {
+                grid-template-columns: 1fr !important;
+                gap: 12px;
+            }
+
+            .stat-card-lg {
+                padding: 14px;
+            }
+
+            /* Responsive Modals */
+            .modal-content {
+                width: 95% !important;
+                margin: 10px;
+                max-height: 85vh;
+                border-radius: 20px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr !important;
+                gap: 0;
+            }
+
+            .form-group {
+                padding: 10px 16px !important;
+            }
+
+            .btn-submit {
+                width: calc(100% - 32px) !important;
+                margin: 16px 16px !important;
+            }
+
+            .col-address {
+                max-width: none !important;
+                white-space: normal !important;
+                overflow: visible !important;
+                text-overflow: clip !important;
             }
         }
 
@@ -885,6 +1206,13 @@
             font-size: 13px;
             color: #374151;
             vertical-align: middle;
+        }
+
+        .col-address {
+            max-width: 160px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .data-table tr:last-child td {
@@ -1785,7 +2113,7 @@
                     const pendingText = (shop.pending_fees || 0) > 0 ? `₹${(shop.pending_fees || 0).toLocaleString()}` : 'No dues';
 
                     const popupContent = `
-                        <div class="shop-popup" style="min-width: 200px;">
+                        <div class="shop-popup" style="min-width: 180px;">
                             <div class="popup-name">🏪 ${escapeHtml(shop.name)}</div>
                             <div class="popup-detail"><i class="fas fa-user"></i> ${escapeHtml(shop.owner_name || 'No owner')}</div>
                             <div class="popup-detail"><i class="fas fa-phone"></i> ${escapeHtml(shop.phone || 'No phone')}</div>
@@ -1793,16 +2121,37 @@
                             <div class="popup-pending ${pendingClass}">
                                 <i class="fas fa-rupee-sign"></i> Pending: ${pendingText}
                             </div>
-                            <button class="popup-sale-btn" onclick="openSaleForShop('${shop.id}', '${escapeHtml(shop.name)}')">
-                                <i class="fas fa-shopping-cart"></i> Quick Sale
-                            </button>
-                            <button class="popup-edit-btn" onclick="editShopFromMap('${shop.id}')">
-                                <i class="fas fa-edit"></i> Edit Location
-                            </button>
+                            <div class="shop-popup-buttons">
+                                <button class="popup-sale-btn" onclick="openSaleForShop('${shop.id}', '${escapeHtml(shop.name)}')">
+                                    <i class="fas fa-shopping-cart"></i> Sell
+                                </button>
+                                <button class="popup-edit-btn" onclick="editShopFromMap('${shop.id}')">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                            </div>
                         </div>
                     `;
 
-                    marker.bindPopup(popupContent);
+                    marker.bindPopup(popupContent, { className: 'custom-popup' });
+
+                    // Hover to show details and highlight card in list on desktop
+                    marker.on('mouseover', function () {
+                        this.openPopup();
+                        const card = document.querySelector(`.shop-card[data-shop-id="${shop.id}"]`);
+                        if (card) {
+                            card.classList.add('glow-enlarge');
+                            card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                    });
+
+                    marker.on('mouseout', function () {
+                        this.closePopup();
+                        const card = document.querySelector(`.shop-card[data-shop-id="${shop.id}"]`);
+                        if (card) {
+                            card.classList.remove('glow-enlarge');
+                        }
+                    });
+
                     markers.push(marker);
                     markerMap[shop.id] = marker;  // store by shopId for reliable lookup
                 }
@@ -1846,7 +2195,7 @@
             }
 
             container.innerHTML = filteredShops.map(shop => `
-                <div class="shop-card" onclick="focusOnShop('${shop.id}')">
+                <div class="shop-card" data-shop-id="${shop.id}" onclick="focusOnShop('${shop.id}')">
                     <div class="shop-name">
                         <span>${escapeHtml(shop.name)} 
                             ${!shop.latitude || !shop.longitude ? '<span class="no-location-badge"><i class="fas fa-map-marker-alt"></i> No location</span>' : ''}
@@ -1864,6 +2213,21 @@
                     </div>
                 </div>
             `).join('');
+
+            // Bind mouseenter and mouseleave listeners to link hover back to map markers on desktop
+            container.querySelectorAll('.shop-card').forEach(card => {
+                const shopId = card.getAttribute('data-shop-id');
+                card.addEventListener('mouseenter', () => {
+                    if (window.innerWidth > 768 && markerMap[shopId]) {
+                        markerMap[shopId].openPopup();
+                    }
+                });
+                card.addEventListener('mouseleave', () => {
+                    if (window.innerWidth > 768 && markerMap[shopId]) {
+                        markerMap[shopId].closePopup();
+                    }
+                });
+            });
         }
 
         // Setup search
@@ -2175,20 +2539,6 @@
         document.getElementById('addShopBtn')?.addEventListener('click', () => openShopModal());
         document.getElementById('addProductBtn')?.addEventListener('click', () => openProductModal());
 
-        // Mobile panel swipe
-        let touchStart = 0;
-        document.querySelector('.map-section')?.addEventListener('touchstart', (e) => {
-            touchStart = e.touches[0].clientY;
-        });
-        document.querySelector('.map-section')?.addEventListener('touchend', (e) => {
-            const touchEnd = e.changedTouches[0].clientY;
-            if (touchStart - touchEnd > 50) {
-                document.getElementById('sidePanel').classList.add('open');
-            } else if (touchEnd - touchStart > 50) {
-                document.getElementById('sidePanel').classList.remove('open');
-            }
-        });
-
         // ══════════════════════════════════════════
         //  SECTION NAVIGATION
         // ══════════════════════════════════════════
@@ -2240,14 +2590,14 @@
                 const typeColor = typeColors[s.shop_type] || '#6c757d';
                 const typeLabel = s.shop_type || 'Retailer';
                 return `<tr>
-                    <td style="color:#9ca3af;font-weight:600">${i + 1}</td>
-                    <td><strong>${escapeHtml(s.name)}</strong></td>
-                    <td>${escapeHtml(s.owner_name || '—')}</td>
-                    <td><span class="badge" style="background:${typeColor}20;color:${typeColor}">${typeLabel}</span></td>
-                    <td>${escapeHtml(s.phone || '—')}</td>
-                    <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(s.address || '—')}</td>
-                    <td><span class="badge ${pendingClass}">${pendingText}</span></td>
-                    <td>${hasGps
+                    <td data-label="#" style="color:#9ca3af;font-weight:600">${i + 1}</td>
+                    <td data-label="Shop Name"><strong>${escapeHtml(s.name)}</strong></td>
+                    <td data-label="Owner">${escapeHtml(s.owner_name || '—')}</td>
+                    <td data-label="Type"><span class="badge" style="background:${typeColor}20;color:${typeColor}">${typeLabel}</span></td>
+                    <td data-label="Phone">${escapeHtml(s.phone || '—')}</td>
+                    <td data-label="Address" class="col-address">${escapeHtml(s.address || '—')}</td>
+                    <td data-label="Pending Fees"><span class="badge ${pendingClass}">${pendingText}</span></td>
+                    <td data-label="Location">${hasGps
                         ? '<span class="badge badge-paid"><i class="fas fa-map-marker-alt"></i> Set</span>'
                         : '<span class="badge badge-due">No GPS</span>'}</td>
                     <td style="white-space:nowrap">
@@ -2396,14 +2746,14 @@
                 const stockClass = (p.stock || 0) < 10 ? 'badge-low' : 'badge-ok';
                 const unit = p.unit || 'piece';
                 return `<tr>
-                    <td style="color:#9ca3af;font-weight:600">${i + 1}</td>
-                    <td><strong>${escapeHtml(p.name)}</strong></td>
-                    <td><span class="badge badge-cat">${escapeHtml(p.category || 'Other')}</span></td>
-                    <td style="color:#6c757d;font-size:12px">${unit}</td>
-                    <td>₹${(p.cost_price || 0).toLocaleString()}</td>
-                    <td><strong>₹${(p.selling_price || 0).toLocaleString()}</strong></td>
-                    <td><span style="color:${margin >= 0 ? '#059669' : '#dc2626'};font-weight:600">${margin}%</span></td>
-                    <td><span class="badge ${stockClass}">${p.stock || 0} ${unit}s</span></td>
+                    <td data-label="#" style="color:#9ca3af;font-weight:600">${i + 1}</td>
+                    <td data-label="Product Name"><strong>${escapeHtml(p.name)}</strong></td>
+                    <td data-label="Category"><span class="badge badge-cat">${escapeHtml(p.category || 'Other')}</span></td>
+                    <td data-label="Unit" style="color:#6c757d;font-size:12px">${unit}</td>
+                    <td data-label="Cost / Unit">₹${(p.cost_price || 0).toLocaleString()}</td>
+                    <td data-label="Sell / Unit"><strong>₹${(p.selling_price || 0).toLocaleString()}</strong></td>
+                    <td data-label="Margin"><span style="color:${margin >= 0 ? '#059669' : '#dc2626'};font-weight:600">${margin}%</span></td>
+                    <td data-label="Stock"><span class="badge ${stockClass}">${p.stock || 0} ${unit}s</span></td>
                     <td style="white-space:nowrap">
                         <button class="btn-xs btn-edit" onclick="editProduct('${p.id}')"><i class="fas fa-edit"></i> Edit</button>
                         <button class="btn-xs btn-del"  onclick="deleteProduct('${p.id}','${escapeHtml(p.name)}')"><i class="fas fa-trash"></i></button>
@@ -2485,16 +2835,16 @@
 
             const statusClass = { 'Paid': 'badge-paid', 'Partial': 'badge-partial', 'Pending': 'badge-due' };
             tbody.innerHTML = rows.map(s => `<tr>
-                <td style="white-space:nowrap">${s.date || '—'}</td>
-                <td><strong>${escapeHtml(shopMap[s.shopId] || s.shopId || '—')}</strong></td>
-                <td>${escapeHtml(productMap[s.productId] || s.productId || '—')}</td>
-                <td style="text-align:center">${s.quantity || 0}</td>
-                <td>₹${(s.unitPrice || 0).toLocaleString()}</td>
-                <td><strong>₹${(s.total || 0).toLocaleString()}</strong></td>
-                <td style="color:#059669">₹${(s.amountPaid || 0).toLocaleString()}</td>
-                <td style="color:#dc2626">₹${(s.pendingAmount || 0).toLocaleString()}</td>
-                <td>${escapeHtml(s.paymentMethod || '—')}</td>
-                <td><span class="badge ${statusClass[s.paymentStatus] || 'badge-due'}">${s.paymentStatus || 'Pending'}</span></td>
+                <td data-label="Date" style="white-space:nowrap">${s.date || '—'}</td>
+                <td data-label="Shop"><strong>${escapeHtml(shopMap[s.shopId] || s.shopId || '—')}</strong></td>
+                <td data-label="Product">${escapeHtml(productMap[s.productId] || s.productId || '—')}</td>
+                <td data-label="Qty" style="text-align:center">${s.quantity || 0}</td>
+                <td data-label="Unit Price">₹${(s.unitPrice || 0).toLocaleString()}</td>
+                <td data-label="Total"><strong>₹${(s.total || 0).toLocaleString()}</strong></td>
+                <td data-label="Paid" style="color:#059669">₹${(s.amountPaid || 0).toLocaleString()}</td>
+                <td data-label="Pending" style="color:#dc2626">₹${(s.pendingAmount || 0).toLocaleString()}</td>
+                <td data-label="Method">${escapeHtml(s.paymentMethod || '—')}</td>
+                <td data-label="Status"><span class="badge ${statusClass[s.paymentStatus] || 'badge-due'}">${s.paymentStatus || 'Pending'}</span></td>
             </tr>`).join('');
         }
     </script>
