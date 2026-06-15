@@ -2146,7 +2146,7 @@
             if (map) return; // guard against double initialization
             map = L.map('map').setView([25.0961, 85.3131], 8); // Bihar, India
 
-            L.tileLayer('https://{s.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
                 maxZoom: 19
             }).addTo(map);
