@@ -1351,46 +1351,55 @@
             height: 44px;
             border-radius: 50%;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 18px;
             transition: all 0.2s;
         }
+
         .my-location-btn:hover {
             background: #f3f4f6;
             color: #667eea;
             transform: scale(1.05);
         }
 
-        /* Print styling for Invoice */
+        /* Print styling for Invoice & Challans */
         @media print {
             body * {
                 visibility: hidden;
             }
-            #invoicePrintArea, #invoicePrintArea * {
-                visibility: visible;
+
+            .print-active,
+            .print-active * {
+                visibility: visible !important;
             }
-            #invoicePrintArea {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                padding: 0;
-                margin: 0;
-                box-shadow: none;
+
+            .print-active {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                box-shadow: none !important;
             }
-            #invoiceModal {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                height: auto;
+
+            .modal.print-modal-active {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                height: auto !important;
                 background: white !important;
                 display: block !important;
+                z-index: 99999 !important;
             }
-            .modal-header, .btn-xs, .modal-close {
+
+            .modal-header,
+            .btn-xs,
+            .modal-close {
                 display: none !important;
             }
         }
@@ -1438,6 +1447,9 @@
                     <button class="nav-tab" id="tab-sales" onclick="showSection('sales')">
                         <i class="fas fa-receipt"></i> Sales
                     </button>
+                    <button class="nav-tab" id="tab-challans" onclick="showSection('challans')">
+                        <i class="fas fa-truck-loading"></i> Challans
+                    </button>
                 </nav>
                 <div class="user-info">
                     <span class="user-email" id="userEmail"></span>
@@ -1457,7 +1469,8 @@
                             <i class="fas fa-map-marker-alt"></i>
                             <span>Normal Mode</span>
                         </div>
-                        <button class="my-location-btn" id="myLocationBtn" type="button" onclick="centerOnMyLocation()" title="Center map on my location">
+                        <button class="my-location-btn" id="myLocationBtn" type="button" onclick="centerOnMyLocation()"
+                            title="Center map on my location">
                             <i class="fas fa-crosshairs"></i>
                         </button>
                     </div>
@@ -1567,8 +1580,11 @@
                     <!-- Payment History Section -->
                     <div class="table-card" id="paymentHistoryCard" style="margin-top: 24px; display: none;">
                         <div class="table-toolbar" style="background:#f0f9ff;">
-                            <h3><i class="fas fa-history" style="color:#0369a1"></i> &nbsp;Payment History for <span id="paymentHistoryShopName">Shop</span></h3>
-                            <button class="btn-xs btn-del" onclick="document.getElementById('paymentHistoryCard').style.display='none'"><i class="fas fa-times"></i> Close</button>
+                            <h3><i class="fas fa-history" style="color:#0369a1"></i> &nbsp;Payment History for <span
+                                    id="paymentHistoryShopName">Shop</span></h3>
+                            <button class="btn-xs btn-del"
+                                onclick="document.getElementById('paymentHistoryCard').style.display='none'"><i
+                                    class="fas fa-times"></i> Close</button>
                         </div>
                         <div class="tbl-overflow">
                             <table class="data-table">
@@ -1714,6 +1730,65 @@
                 </div>
             </div>
 
+            <!-- ══ SECTION: Challans ══ -->
+            <div id="section-challans" class="section-view">
+                <div class="data-page">
+                    <!-- Stats Row -->
+                    <div class="stats-row" id="challansStatsRow">
+                        <div class="stat-card-lg">
+                            <div class="sc-icon" style="background:#ede9fe"><i class="fas fa-file-signature"
+                                    style="color:#7c3aed"></i></div>
+                            <div>
+                                <div class="sc-label">Total Challans</div>
+                                <div class="sc-value" id="sc-totalChallans">0</div>
+                            </div>
+                        </div>
+                        <div class="stat-card-lg">
+                            <div class="sc-icon" style="background:#fef3c7"><i class="fas fa-clock"
+                                    style="color:#d97706"></i></div>
+                            <div>
+                                <div class="sc-label">Pending Delivery</div>
+                                <div class="sc-value" id="sc-pendingChallans">0</div>
+                            </div>
+                        </div>
+                        <div class="stat-card-lg">
+                            <div class="sc-icon" style="background:#d1fae5"><i class="fas fa-check-double"
+                                    style="color:#059669"></i></div>
+                            <div>
+                                <div class="sc-label">Converted to Sale</div>
+                                <div class="sc-value" id="sc-convertedChallans">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Table -->
+                    <div class="table-card">
+                        <div class="table-toolbar">
+                            <h3><i class="fas fa-truck-loading" style="color:#7c3aed"></i> &nbsp;Delivery Challans</h3>
+                            <div class="toolbar-right">
+                                <input class="tbl-search" id="challansTableSearch" placeholder="🔍 Search..."
+                                    oninput="renderChallansTable(this.value)">
+                            </div>
+                        </div>
+                        <div class="tbl-overflow">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Challan No</th>
+                                        <th>Shop Name</th>
+                                        <th>Date</th>
+                                        <th>Total Amount</th>
+                                        <th>Status</th>
+                                        <th>Driver / Vehicle</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="challansTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -1759,7 +1834,8 @@
                             <button type="button" id="pickLocationBtn" class="pick-location-btn" style="flex:1;">
                                 <i class="fas fa-map-marker-alt"></i> Pick on Map
                             </button>
-                            <button type="button" id="gpsLocationBtn" class="pick-location-btn" style="flex:1; background:#059669; color:white;" onclick="useGPSLocation()">
+                            <button type="button" id="gpsLocationBtn" class="pick-location-btn"
+                                style="flex:1; background:#059669; color:white;" onclick="useGPSLocation()">
                                 <i class="fas fa-crosshairs"></i> Use Live GPS
                             </button>
                         </div>
@@ -1899,26 +1975,36 @@
     <!-- Invoice Modal -->
     <div id="invoiceModal" class="modal">
         <div class="modal-content" style="max-width: 650px; padding: 0; overflow: hidden; border-radius: 16px;">
-            <div class="modal-header" style="padding: 16px 24px; background: #f8f9fa; border-bottom: 1px solid #e9ecef;">
+            <div class="modal-header"
+                style="padding: 16px 24px; background: #f8f9fa; border-bottom: 1px solid #e9ecef;">
                 <h2 style="font-weight:700;"><i class="fas fa-file-invoice" style="color:#667eea;"></i> Invoice</h2>
                 <div style="display: flex; gap: 8px;">
-                    <button class="btn-xs btn-sale" style="background:#ede9fe; color:#7c3aed; padding: 6px 12px;" onclick="printInvoice()"><i class="fas fa-print"></i> Print</button>
-                    <button class="btn-xs btn-sale" style="background:#d1fae5; color:#059669; padding: 6px 12px;" onclick="downloadInvoicePDF()"><i class="fas fa-file-pdf"></i> Download PDF</button>
-                    <button class="modal-close" style="position:static; font-size:24px; padding: 0 4px;" onclick="closeModal('invoiceModal')">&times;</button>
+                    <button class="btn-xs btn-sale" style="background:#ede9fe; color:#7c3aed; padding: 6px 12px;"
+                        onclick="printInvoice()"><i class="fas fa-print"></i> Print</button>
+                    <button class="btn-xs btn-sale" style="background:#d1fae5; color:#059669; padding: 6px 12px;"
+                        onclick="downloadInvoicePDF()"><i class="fas fa-file-pdf"></i> Download PDF</button>
+                    <button class="modal-close" style="position:static; font-size:24px; padding: 0 4px;"
+                        onclick="closeModal('invoiceModal')">&times;</button>
                 </div>
             </div>
-            
+
             <!-- Invoice Printable Area -->
-            <div id="invoicePrintArea" style="padding: 30px; background: white; color: #1f2937; font-family: 'Inter', sans-serif;">
+            <div id="invoicePrintArea"
+                style="padding: 30px; background: white; color: #1f2937; font-family: 'Inter', sans-serif;">
                 <!-- Invoice Header -->
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #e5e7eb; padding-bottom: 16px;">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #e5e7eb; padding-bottom: 16px;">
                     <div>
-                        <h1 style="font-size: 26px; font-weight: 800; color: #667eea; margin: 0; line-height: 1.2;">DistroMS</h1>
-                        <p style="font-size: 11px; color: #6b7280; margin: 2px 0 0 0;">Smart Distribution Management System</p>
+                        <h1 style="font-size: 26px; font-weight: 800; color: #667eea; margin: 0; line-height: 1.2;">
+                            DistroMS</h1>
+                        <p style="font-size: 11px; color: #6b7280; margin: 2px 0 0 0;">Smart Distribution Management
+                            System</p>
                     </div>
                     <div style="text-align: right;">
-                        <h2 style="font-size: 18px; font-weight: 700; color: #111827; margin: 0; line-height: 1.2;">INVOICE</h2>
-                        <p style="font-size: 12px; font-weight: 600; color: #4b5563; margin: 4px 0 0 0;" id="invNumber">INV-XXXXXX</p>
+                        <h2 style="font-size: 18px; font-weight: 700; color: #111827; margin: 0; line-height: 1.2;">
+                            INVOICE</h2>
+                        <p style="font-size: 12px; font-weight: 600; color: #4b5563; margin: 4px 0 0 0;" id="invNumber">
+                            INV-XXXXXX</p>
                         <p style="font-size: 11px; color: #6b7280; margin: 2px 0 0 0;" id="invDate">Date: —</p>
                     </div>
                 </div>
@@ -1926,18 +2012,25 @@
                 <!-- Invoice Details -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
                     <div>
-                        <h3 style="font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">Billed To:</h3>
+                        <h3
+                            style="font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">
+                            Billed To:</h3>
                         <p style="font-size: 13px; font-weight: 700; color: #111827; margin: 0;" id="invShopName">—</p>
                         <p style="font-size: 12px; color: #4b5563; margin: 4px 0 0 0;" id="invShopAddress">—</p>
                         <p style="font-size: 12px; color: #4b5563; margin: 2px 0 0 0;" id="invShopPhone">Phone: —</p>
                     </div>
                     <div style="text-align: right;">
-                        <h3 style="font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">Status:</h3>
+                        <h3
+                            style="font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">
+                            Status:</h3>
                         <span id="invStatusBadge" class="badge">Pending</span>
-                        
+
                         <div style="margin-top: 12px;">
-                            <h3 style="font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px;">Payment Method:</h3>
-                            <p style="font-size: 12px; font-weight: 600; color: #4b5563; margin: 0;" id="invPaymentMethod">—</p>
+                            <h3
+                                style="font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px;">
+                                Payment Method:</h3>
+                            <p style="font-size: 12px; font-weight: 600; color: #4b5563; margin: 0;"
+                                id="invPaymentMethod">—</p>
                         </div>
                     </div>
                 </div>
@@ -1946,10 +2039,18 @@
                 <table style="width: 100%; border-collapse: collapse; margin-top: 24px; text-align: left;">
                     <thead>
                         <tr style="border-bottom: 2px solid #e5e7eb; border-top: 1px solid #e5e7eb;">
-                            <th style="padding: 8px 0; font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase;">Product Description</th>
-                            <th style="padding: 8px 0; font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase; text-align: center;">Qty</th>
-                            <th style="padding: 8px 0; font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase; text-align: right;">Unit Price</th>
-                            <th style="padding: 8px 0; font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase; text-align: right;">Total</th>
+                            <th
+                                style="padding: 8px 0; font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase;">
+                                Product Description</th>
+                            <th
+                                style="padding: 8px 0; font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase; text-align: center;">
+                                Qty</th>
+                            <th
+                                style="padding: 8px 0; font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase; text-align: right;">
+                                Unit Price</th>
+                            <th
+                                style="padding: 8px 0; font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase; text-align: right;">
+                                Total</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1960,19 +2061,23 @@
                 <!-- Summary section -->
                 <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
                     <div style="width: 220px;">
-                        <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; color: #4b5563;">
+                        <div
+                            style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; color: #4b5563;">
                             <span>Subtotal:</span>
                             <span id="invSubtotal">₹0.00</span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; font-weight: 700; color: #111827; border-top: 1px solid #e5e7eb; border-bottom: 2px double #e5e7eb;">
+                        <div
+                            style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; font-weight: 700; color: #111827; border-top: 1px solid #e5e7eb; border-bottom: 2px double #e5e7eb;">
                             <span>Grand Total:</span>
                             <span id="invGrandTotal">₹0.00</span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; color: #059669; font-weight: 600;">
+                        <div
+                            style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; color: #059669; font-weight: 600;">
                             <span>Amount Paid:</span>
                             <span id="invPaid">₹0.00</span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; color: #dc2626; font-weight: 600; border-top: 1px dashed #e5e7eb;">
+                        <div
+                            style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; color: #dc2626; font-weight: 600; border-top: 1px dashed #e5e7eb;">
                             <span>Balance Due:</span>
                             <span id="invDue">₹0.00</span>
                         </div>
@@ -1981,9 +2086,202 @@
 
                 <!-- Footer note -->
                 <div style="margin-top: 30px; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 16px;">
-                    <p style="font-size: 13px; font-weight: 600; color: #4b5563; margin: 0;">Thank you for your business!</p>
-                    <p style="font-size: 10px; color: #9ca3af; margin: 2px 0 0 0;">This is a system generated invoice.</p>
+                    <p style="font-size: 13px; font-weight: 600; color: #4b5563; margin: 0;">Thank you for your
+                        business!</p>
+                    <p style="font-size: 10px; color: #9ca3af; margin: 2px 0 0 0;">This is a system generated invoice.
+                    </p>
                 </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Challan Modal (Creation) -->
+    <div id="challanModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h2>📋 Create Delivery Challan / Purja</h2>
+                    <div id="challanShopBadge" style="font-size:12px;margin-top:4px;color:#6c757d"></div>
+                </div>
+                <button class="modal-close" onclick="closeModal('challanModal')">&times;</button>
+            </div>
+            <form id="challanForm">
+                <input type="hidden" id="challanShopId">
+                <div class="form-group">
+                    <label>Shop</label>
+                    <input type="text" id="challanShopName" readonly
+                        style="background:#f8f9fa;font-weight:600;color:#374151">
+                </div>
+                <div class="form-group">
+                    <label>Select Product</label>
+                    <select id="challanProductId" required onchange="updateChallanSummary()"></select>
+                </div>
+                <!-- Product info card -->
+                <div id="challanProductInfo" style="display:none;margin:0 24px 8px;padding:12px 16px;
+                    background:#f3e8ff;border-radius:12px;border-left:4px solid #7c3aed;font-size:13px">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" id="challanQuantity" min="1" required oninput="updateChallanSummary()"
+                            placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Vehicle Number</label>
+                        <input type="text" id="challanVehicleNumber" placeholder="e.g. BR-01-1234">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Driver Name</label>
+                    <input type="text" id="challanDriverName" placeholder="Driver name">
+                </div>
+                <!-- Live summary -->
+                <div id="challanSummary" style="margin:0 24px 4px;padding:14px 16px;
+                    background:#f3f4f6;border-radius:12px;font-size:13px;display:none">
+                </div>
+                <button type="submit" class="btn-submit" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)">
+                    <i class="fas fa-check"></i> Confirm Challan
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Challan View Modal -->
+    <div id="challanViewModal" class="modal">
+        <div class="modal-content" style="max-width: 650px; padding: 0; overflow: hidden; border-radius: 16px;">
+            <div class="modal-header"
+                style="padding: 16px 24px; background: #f8f9fa; border-bottom: 1px solid #e9ecef;">
+                <h2 style="font-weight:700;"><i class="fas fa-file-signature" style="color:#7c3aed;"></i> Delivery
+                    Challan / Purja</h2>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-xs btn-sale" style="background:#ede9fe; color:#7c3aed; padding: 6px 12px;"
+                        onclick="printChallan()"><i class="fas fa-print"></i> Print</button>
+                    <button class="btn-xs btn-sale" style="background:#d1fae5; color:#059669; padding: 6px 12px;"
+                        onclick="downloadChallanPDF()"><i class="fas fa-file-pdf"></i> Download PDF</button>
+                    <button class="modal-close" style="position:static; font-size:24px; padding: 0 4px;"
+                        onclick="closeModal('challanViewModal')">&times;</button>
+                </div>
+            </div>
+
+            <!-- Challan Printable Area -->
+            <div id="challanViewPrintArea"
+                style="padding: 30px; background: white; color: #1f2937; font-family: 'Inter', sans-serif;">
+                <!-- Challan Header -->
+                <div
+                    style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #e5e7eb; padding-bottom: 16px;">
+                    <div>
+                        <h1 style="font-size: 26px; font-weight: 800; color: #7c3aed; margin: 0; line-height: 1.2;">
+                            HardwareMS</h1>
+                        <p style="font-size: 11px; color: #6b7280; margin: 2px 0 0 0;">Smart Distribution Management
+                            System</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <h2 style="font-size: 18px; font-weight: 700; color: #111827; margin: 0; line-height: 1.2;">
+                            DELIVERY CHALLAN</h2>
+                        <p style="font-size: 12px; font-weight: 600; color: #4b5563; margin: 4px 0 0 0;" id="chNumber">
+                            DC-XXXXXX</p>
+                        <p style="font-size: 11px; color: #6b7280; margin: 2px 0 0 0;" id="chDate">Date: —</p>
+                    </div>
+                </div>
+
+                <!-- Challan Details -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                    <div>
+                        <h3
+                            style="font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">
+                            Billed To:</h3>
+                        <p style="font-size: 13px; font-weight: 700; color: #111827; margin: 0;" id="chShopName">—</p>
+                        <p style="font-size: 12px; color: #4b5563; margin: 4px 0 0 0;" id="chShopAddress">—</p>
+                        <p style="font-size: 12px; color: #4b5563; margin: 2px 0 0 0;" id="chShopPhone">Phone: —</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <h3
+                            style="font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">
+                            Delivery Details:</h3>
+                        <p style="font-size: 12px; color: #4b5563; margin: 0;" id="chDriverName">Driver: —</p>
+                        <p style="font-size: 12px; color: #4b5563; margin: 2px 0 0 0;" id="chVehicleNumber">Vehicle: —
+                        </p>
+
+                        <div style="margin-top: 12px;">
+                            <h3
+                                style="font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px;">
+                                Status:</h3>
+                            <span id="chStatusBadge" class="badge">Pending Delivery</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Challan Table -->
+                <table style="width: 100%; border-collapse: collapse; margin-top: 24px; text-align: left;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #e5e7eb; border-top: 1px solid #e5e7eb;">
+                            <th
+                                style="padding: 8px 0; font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase; width: 8%;">
+                                S.No</th>
+                            <th
+                                style="padding: 8px 0; font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase;">
+                                Product Description</th>
+                            <th
+                                style="padding: 8px 0; font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase; text-align: center;">
+                                Qty</th>
+                            <th
+                                style="padding: 8px 0; font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase; text-align: right;">
+                                Rate</th>
+                            <th
+                                style="padding: 8px 0; font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase; text-align: right;">
+                                Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="challanItemsTableBody">
+                        <!-- Items populated dynamically -->
+                    </tbody>
+                </table>
+
+                <!-- Summary section -->
+                <div
+                    style="display: flex; justify-content: flex-end; margin-top: 16px; border-bottom: 1px solid #e5e7eb; padding-bottom: 16px;">
+                    <div style="width: 220px;">
+                        <div
+                            style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; font-weight: 700; color: #111827; border-top: 1px solid #e5e7eb;">
+                            <span>Total Amount:</span>
+                            <span id="chTotalAmount">₹0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Signatures and Receipt Date Section -->
+                <div
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 50px; font-size: 12px; color: #374151;">
+                    <div style="border-top: 1px dashed #9ca3af; padding-top: 8px; text-align: left;">
+                        <p style="font-weight: 700; margin: 0;">Received by (Shopkeeper Signature)</p>
+                        <p style="margin-top: 16px; color: #6b7280;">Date of Receipt: _________________</p>
+                    </div>
+                    <div style="border-top: 1px dashed #9ca3af; padding-top: 8px; text-align: right;">
+                        <p style="font-weight: 700; margin: 0;">Delivered by (Salesman Name)</p>
+                        <p style="margin-top: 16px; color: #6b7280;" id="chSalesmanName">—</p>
+                    </div>
+                </div>
+
+                <!-- Footer note -->
+                <div style="margin-top: 30px; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 16px;">
+                    <p style="font-size: 13px; font-weight: 600; color: #4b5563; margin: 0;">Thank you for your
+                        business!</p>
+                    <p style="font-size: 10px; color: #9ca3af; margin: 2px 0 0 0;">This is a system generated delivery
+                        challan.</p>
+                </div>
+            </div>
+
+            <!-- Convert to Sale Button Area (visible only when viewing pending challan) -->
+            <div id="challanConvertBtnArea"
+                style="padding: 16px 30px; background: #f8f9fa; border-top: 1px solid #e9ecef; display: flex; justify-content: flex-end; gap: 10px;">
+                <span id="chConversionInfo"
+                    style="margin-right: auto; display: flex; align-items: center; font-size: 13px; color: #4b5563; font-weight: 500;"></span>
+                <button id="chConvertBtn" class="btn-xs btn-sale"
+                    style="background:#059669; color:white; padding: 8px 16px; font-size: 13px; border-radius: 8px;"
+                    onclick="convertActiveChallanToSale()">
+                    <i class="fas fa-check-double"></i> Convert to Sale
+                </button>
             </div>
         </div>
     </div>
@@ -2079,6 +2377,8 @@
         let markerMap = {};     // shopId -> L.marker  (fixes index mismatch bug)
         let allShops = [];
         let allProducts = [];
+        let allChallans = [];
+        let activeChallanId = null;
         let currentSelectedShop = null;
         let isPickingLocation = false;
         let tempSelectedLat = null;
@@ -2174,7 +2474,7 @@
                         .bindPopup('📍 Selected Location').openPopup();
 
                     stopPickingLocation(); // restores modal visibility
-                    
+
                     showToast('🔍 Fetching address from location...');
                     const address = await reverseGeocode(tempSelectedLat, tempSelectedLng);
                     document.getElementById('shopAddress').value = address;
@@ -2230,7 +2530,7 @@
             const originalHTML = gpsBtn.innerHTML;
             gpsBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Getting GPS...';
             gpsBtn.disabled = true;
-            
+
             navigator.geolocation.getCurrentPosition(async (position) => {
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
@@ -2238,26 +2538,26 @@
                 tempSelectedLng = lng;
                 document.getElementById('shopLat').value = lat;
                 document.getElementById('shopLng').value = lng;
-                
+
                 document.getElementById('locationPreview').innerHTML = `
                     <i class="fas fa-check-circle" style="color:#059669"></i>
                     GPS: ${lat.toFixed(6)}, ${lng.toFixed(6)}
                 `;
-                
+
                 // Add temporary marker
                 if (window.tempMarker) {
                     map.removeLayer(window.tempMarker);
                 }
                 window.tempMarker = L.marker([lat, lng]).addTo(map)
                     .bindPopup('📍 GPS Location').openPopup();
-                
+
                 // Center map
                 map.setView([lat, lng], 16);
-                
+
                 showToast('🔍 Fetching address for GPS coordinates...');
                 const address = await reverseGeocode(lat, lng);
                 document.getElementById('shopAddress').value = address;
-                
+
                 gpsBtn.innerHTML = originalHTML;
                 gpsBtn.disabled = false;
                 showToast('✅ Location updated with live GPS! Address filled.');
@@ -2278,12 +2578,12 @@
             const btn = document.getElementById('myLocationBtn');
             const icon = btn.querySelector('i');
             icon.className = 'fas fa-spinner fa-spin';
-            
+
             navigator.geolocation.getCurrentPosition((position) => {
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
                 map.setView([lat, lng], 15);
-                
+
                 if (window.myLocationMarker) {
                     map.removeLayer(window.myLocationMarker);
                 }
@@ -2295,7 +2595,7 @@
                     opacity: 1,
                     fillOpacity: 0.8
                 }).addTo(map).bindPopup('🏠 You are here').openPopup();
-                
+
                 icon.className = 'fas fa-crosshairs';
                 showToast('Centered map on your current location!');
             }, (error) => {
@@ -2379,7 +2679,8 @@
             await Promise.all([
                 loadShops(),
                 loadProducts(),
-                loadStats()
+                loadStats(),
+                loadChallans()
             ]);
         }
 
@@ -2415,6 +2716,9 @@
                             <div class="shop-popup-buttons">
                                 <button class="popup-sale-btn" onclick="openSaleForShop('${shop.id}', '${escapeHtml(shop.name)}')">
                                     <i class="fas fa-shopping-cart"></i> Sell
+                                </button>
+                                <button class="popup-sale-btn" style="background:#7c3aed;" onclick="openChallanForShop('${shop.id}', '${escapeHtml(shop.name)}')">
+                                    <i class="fas fa-truck-loading"></i> Challan
                                 </button>
                                 <button class="popup-edit-btn" onclick="editShopFromMap('${shop.id}')">
                                     <i class="fas fa-edit"></i> Edit
@@ -2852,7 +3156,7 @@
         //  SECTION NAVIGATION
         // ══════════════════════════════════════════
         function showSection(name) {
-            ['map', 'shops', 'products', 'sales'].forEach(s => {
+            ['map', 'shops', 'products', 'sales', 'challans'].forEach(s => {
                 document.getElementById('section-' + s).classList.toggle('active', s === name);
                 const tab = document.getElementById('tab-' + s);
                 if (tab) tab.classList.toggle('active', s === name);
@@ -2860,6 +3164,7 @@
             if (name === 'shops') renderShopsTable();
             if (name === 'products') renderProductsTable();
             if (name === 'sales') loadAndRenderSales();
+            if (name === 'challans') loadAndRenderChallans();
         }
 
         // ══════════════════════════════════════════
@@ -2912,6 +3217,7 @@
                     <td style="white-space:nowrap">
                         <button class="btn-xs btn-edit" onclick="openShopModal(allShops.find(x=>x.id==='${s.id}'))"><i class="fas fa-edit"></i> Edit</button>
                         <button class="btn-xs btn-sale" onclick="openSaleForShop('${s.id}','${escapeHtml(s.name)}')"><i class="fas fa-shopping-cart"></i> Sell</button>
+                        <button class="btn-xs btn-collect" style="background:#ede9fe;color:#7c3aed;" onclick="openChallanForShop('${s.id}','${escapeHtml(s.name)}')"><i class="fas fa-truck-loading"></i> Challan</button>
                         ${pending > 0 ? `<button class="btn-xs btn-collect" onclick="openCollectModal('${s.id}','${escapeHtml(s.name)}',${pending})"><i class="fas fa-hand-holding-usd"></i> ₹Collect</button>` : ''}
                         <button class="btn-xs btn-collect" style="background:#e0f2fe;color:#0369a1;" onclick="viewPaymentHistory('${s.id}','${escapeHtml(s.name)}')"><i class="fas fa-history"></i> Payments</button>
                         <button class="btn-xs btn-del"  onclick="deleteShop('${s.id}','${escapeHtml(s.name)}')"><i class="fas fa-trash"></i></button>
@@ -3238,14 +3544,14 @@
             }
 
             // Set invoice text fields
-            document.getElementById('invNumber').textContent = sale.invoiceNumber || `INV-${(sale.dateStr || '20260615')}-${sale.id.slice(0,3).toUpperCase()}`;
+            document.getElementById('invNumber').textContent = sale.invoiceNumber || `INV-${(sale.dateStr || '20260615')}-${sale.id.slice(0, 3).toUpperCase()}`;
             document.getElementById('invDate').textContent = `Date: ${dateText}`;
             document.getElementById('invShopName').textContent = shop.name;
             document.getElementById('invShopAddress').textContent = shop.address || 'No Address';
             document.getElementById('invShopPhone').textContent = `Phone: ${shop.phone || '—'}`;
-            
+
             document.getElementById('invPaymentMethod').textContent = sale.paymentMethod || 'Cash';
-            
+
             const badge = document.getElementById('invStatusBadge');
             badge.textContent = sale.paymentStatus || 'Pending';
             badge.className = 'badge';
@@ -3287,14 +3593,373 @@
         };
 
         // Print Invoice using window.print()
-        window.printInvoice = function() {
+        window.printInvoice = function () {
+            const printArea = document.getElementById('invoicePrintArea');
+            const printModal = document.getElementById('invoiceModal');
+            printArea.classList.add('print-active');
+            printModal.classList.add('print-modal-active');
             window.print();
+            setTimeout(() => {
+                printArea.classList.remove('print-active');
+                printModal.classList.remove('print-modal-active');
+            }, 500);
         };
 
         // Download Invoice as PDF using html2canvas & jsPDF
-        window.downloadInvoicePDF = function() {
+        window.downloadInvoicePDF = function () {
             const element = document.getElementById('invoicePrintArea');
             const filename = `${document.getElementById('invNumber').textContent}.pdf`;
+
+            showToast('Generating PDF...');
+
+            const { jsPDF } = window.jspdf;
+
+            html2canvas(element, { scale: 2, useCORS: true }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const imgWidth = 210 - 20; // 190mm
+                const pageHeight = 297;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+                pdf.save(filename);
+                showToast('✅ PDF downloaded successfully!');
+            }).catch(err => {
+                console.error('PDF generation error:', err);
+                showToast('❌ Failed to download PDF');
+            });
+        };
+
+        // ══════════════════════════════════════════
+        //  DELIVERY CHALLANS / PURJA
+        // ══════════════════════════════════════════
+        async function loadChallans() {
+            try {
+                const snapshot = await db.collection('delivery_challans').get();
+                // sort in memory to avoid Firestore index requirement
+                allChallans = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+                    .sort((a, b) => {
+                        const tsA = a.timestamp ? (a.timestamp.toDate ? a.timestamp.toDate() : new Date(a.timestamp)) : 0;
+                        const tsB = b.timestamp ? (b.timestamp.toDate ? b.timestamp.toDate() : new Date(b.timestamp)) : 0;
+                        return tsB - tsA;
+                    });
+            } catch (e) {
+                console.error("Error loading challans:", e);
+            }
+        }
+
+        window.openChallanForShop = function (shopId, shopName) {
+            const shop = allShops.find(s => s.id === shopId);
+            document.getElementById('challanShopId').value = shopId;
+            document.getElementById('challanShopName').value = shopName;
+
+            // Show shop type badge under title
+            const badge = document.getElementById('challanShopBadge');
+            if (badge && shop?.shop_type) {
+                const typeColors = { Wholesaler: '#7c3aed', Retailer: '#2563eb', Both: '#059669' };
+                badge.innerHTML = `<span style="background:${typeColors[shop.shop_type] || '#667eea'}20;
+                    color:${typeColors[shop.shop_type] || '#667eea'};padding:2px 10px;
+                    border-radius:20px;font-weight:600">${shop.shop_type}</span>`;
+            }
+
+            // Populate products dropdown
+            const productSelect = document.getElementById('challanProductId');
+            productSelect.innerHTML = '<option value="">-- Select a product --</option>';
+            allProducts.forEach(p => {
+                const unitLabel = p.unit ? `/${p.unit}` : '/pc';
+                const stock = p.stock || 0;
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.dataset.price = p.selling_price || 0;
+                opt.dataset.cost = p.cost_price || 0;
+                opt.dataset.stock = stock;
+                opt.dataset.unit = p.unit || 'piece';
+                opt.textContent = `${p.name} — ₹${p.selling_price || 0}/${p.unit || 'pc'} (Stock: ${p.stock || 0})`;
+                productSelect.appendChild(opt);
+            });
+
+            // Reset fields
+            document.getElementById('challanQuantity').value = '';
+            document.getElementById('challanVehicleNumber').value = '';
+            document.getElementById('challanDriverName').value = '';
+            document.getElementById('challanProductInfo').style.display = 'none';
+            document.getElementById('challanSummary').style.display = 'none';
+            document.getElementById('challanModal').style.display = 'flex';
+        };
+
+        window.updateChallanSummary = function () {
+            const productSelect = document.getElementById('challanProductId');
+            if (!productSelect.value) {
+                document.getElementById('challanProductInfo').style.display = 'none';
+                document.getElementById('challanSummary').style.display = 'none';
+                return;
+            }
+            const selectedOpt = productSelect?.options[productSelect.selectedIndex];
+            const quantity = parseInt(document.getElementById('challanQuantity')?.value) || 0;
+
+            if (!selectedOpt?.value) {
+                document.getElementById('challanProductInfo').style.display = 'none';
+                document.getElementById('challanSummary').style.display = 'none';
+                return;
+            }
+
+            const price = parseFloat(selectedOpt.dataset.price) || 0;
+            const cost = parseFloat(selectedOpt.dataset.cost) || 0;
+            const stock = parseInt(selectedOpt.dataset.stock) || 0;
+            const unit = selectedOpt.dataset.unit || 'piece';
+            const total = price * quantity;
+            const margin = cost > 0 ? Math.round(((price - cost) / cost) * 100) : 0;
+
+            // Product info card
+            const infoDiv = document.getElementById('challanProductInfo');
+            infoDiv.style.display = 'block';
+            infoDiv.innerHTML = `
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+                    <div><span style="color:#6c757d;font-size:11px">COST / ${unit.toUpperCase()}</span><br>
+                        <strong>₹${cost.toLocaleString()}</strong></div>
+                    <div><span style="color:#6c757d;font-size:11px">SELL / ${unit.toUpperCase()}</span><br>
+                        <strong style="color:#7c3aed">₹${price.toLocaleString()}</strong></div>
+                    <div><span style="color:#6c757d;font-size:11px">IN STOCK</span><br>
+                        <strong style="color:${stock < 10 ? '#dc2626' : '#374151'}">${stock} ${unit}s</strong></div>
+                </div>
+                <div style="margin-top:6px;font-size:11px;color:#7c3aed">Margin: ${margin}%</div>
+            `;
+
+            // Live summary
+            const summary = document.getElementById('challanSummary');
+            if (quantity > 0) {
+                summary.style.display = 'block';
+                summary.innerHTML = `
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                        <div>₹${price.toLocaleString()} × ${quantity} ${unit}s</div>
+                        <div style="text-align:right"><strong>Total Amount: ₹${total.toLocaleString()}</strong></div>
+                    </div>
+                `;
+            } else {
+                summary.style.display = 'none';
+            }
+        };
+
+        // Submit Challan
+        document.getElementById('challanForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const shopId = document.getElementById('challanShopId').value;
+            const productId = document.getElementById('challanProductId').value;
+            const quantity = parseInt(document.getElementById('challanQuantity').value);
+            const vehicleNumber = document.getElementById('challanVehicleNumber').value.trim();
+            const driverName = document.getElementById('challanDriverName').value.trim();
+
+            if (!shopId || !productId || !quantity) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            try {
+                const productDoc = await db.collection('products').doc(productId).get();
+                const product = productDoc.data();
+                const totalAmount = product.selling_price * quantity;
+
+                // Get sequence number for Challan today
+                const todayStr = new Date().toISOString().split('T')[0].replace(/-/g, ''); // YYYYMMDD
+                const challansToday = await db.collection('delivery_challans')
+                    .where('dateStr', '==', todayStr)
+                    .get();
+                const sequenceNum = challansToday.size + 1;
+                const seqStr = String(sequenceNum).padStart(3, '0');
+                const challanNumber = `DC-${todayStr}-${seqStr}`;
+
+                const challanRef = db.collection('delivery_challans').doc();
+                await challanRef.set({
+                    shopId, productId, quantity,
+                    unitPrice: product.selling_price,
+                    total: totalAmount,
+                    driverName: driverName || '—',
+                    vehicleNumber: vehicleNumber || '—',
+                    challanNumber,
+                    status: 'Pending Delivery',
+                    dateStr: todayStr,
+                    date: new Date().toLocaleDateString('en-IN'),
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    saleInvoiceNumber: '',
+                    saleId: ''
+                });
+
+                showToast('Challan recorded successfully!');
+                closeModal('challanModal');
+                await loadAllData();
+                viewChallan(challanRef.id);
+            } catch (error) {
+                console.error(error);
+                alert('Error: ' + error.message);
+            }
+        });
+
+        // Load and Render Challans in Section
+        async function loadAndRenderChallans() {
+            const tbody = document.getElementById('challansTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#9ca3af"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
+            
+            try {
+                await loadChallans();
+                renderChallansTable(document.getElementById('challansTableSearch')?.value || '');
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:#dc2626">Error loading challans: ${e.message}</td></tr>`;
+            }
+        }
+
+        window.renderChallansTable = function (filter = '') {
+            const tbody = document.getElementById('challansTableBody');
+            if (!tbody) return;
+            const q = filter.toLowerCase();
+
+            const rows = allChallans.filter(c => {
+                const shop = allShops.find(s => s.id === c.shopId) || {};
+                return !q ||
+                    (c.challanNumber || '').toLowerCase().includes(q) ||
+                    (shop.name || '').toLowerCase().includes(q) ||
+                    (c.date || '').toLowerCase().includes(q) ||
+                    (c.driverName || '').toLowerCase().includes(q) ||
+                    (c.vehicleNumber || '').toLowerCase().includes(q) ||
+                    (c.status || '').toLowerCase().includes(q);
+            });
+
+            // Update tab stats
+            const total = allChallans.length;
+            const pending = allChallans.filter(c => c.status === 'Pending Delivery').length;
+            const converted = allChallans.filter(c => c.status === 'Converted to Sale' || c.status === 'Converted').length;
+
+            document.getElementById('sc-totalChallans').textContent = total;
+            document.getElementById('sc-pendingChallans').textContent = pending;
+            document.getElementById('sc-convertedChallans').textContent = converted;
+
+            if (rows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7">
+                    <div class="empty-state"><i class="fas fa-file-signature"></i><p>No challans found</p></div>
+                </td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = rows.map(c => {
+                const shop = allShops.find(s => s.id === c.shopId) || { name: 'Unknown Shop' };
+                const totalText = '₹' + (c.total || 0).toLocaleString();
+                const statusClass = (c.status === 'Converted to Sale' || c.status === 'Converted') ? 'badge-paid' : 'badge-partial';
+                
+                return `<tr>
+                    <td data-label="Challan No"><strong>${escapeHtml(c.challanNumber)}</strong></td>
+                    <td data-label="Shop Name">${escapeHtml(shop.name)}</td>
+                    <td data-label="Date">${escapeHtml(c.date || '—')}</td>
+                    <td data-label="Total Amount">${totalText}</td>
+                    <td data-label="Status"><span class="badge ${statusClass}">${c.status || 'Pending Delivery'}</span></td>
+                    <td data-label="Driver/Vehicle">${escapeHtml(c.driverName || '—')} / ${escapeHtml(c.vehicleNumber || '—')}</td>
+                    <td style="white-space:nowrap">
+                        <button class="btn-xs btn-edit" style="background:#e0e7ff;color:#4f46e5;" onclick="viewChallan('${c.id}')"><i class="fas fa-file-signature"></i> View/Print</button>
+                        ${(c.status === 'Pending Delivery') ? `<button class="btn-xs btn-sale" onclick="directConvertChallan('${c.id}')"><i class="fas fa-check-double"></i> Convert</button>` : ''}
+                    </td>
+                </tr>`;
+            }).join('');
+        };
+
+        window.viewChallan = function (challanId) {
+            const challan = allChallans.find(c => c.id === challanId);
+            if (!challan) {
+                alert('Challan record not found');
+                return;
+            }
+
+            activeChallanId = challanId;
+
+            const shop = allShops.find(s => s.id === challan.shopId) || {
+                name: 'Unknown Shop',
+                address: 'N/A',
+                phone: 'N/A'
+            };
+            const product = allProducts.find(p => p.id === challan.productId) || {
+                name: 'Unknown Product',
+                unit: 'pc'
+            };
+
+            // Format Date & Time
+            let dateText = challan.date || '—';
+            if (challan.timestamp) {
+                const ts = challan.timestamp.toDate ? challan.timestamp.toDate() : new Date(challan.timestamp);
+                dateText = ts.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+            }
+
+            // Set text fields
+            document.getElementById('chNumber').textContent = challan.challanNumber;
+            document.getElementById('chDate').textContent = `Date: ${dateText}`;
+            document.getElementById('chShopName').textContent = shop.name;
+            document.getElementById('chShopAddress').textContent = shop.address || 'No Address';
+            document.getElementById('chShopPhone').textContent = `Phone: ${shop.phone || '—'}`;
+            document.getElementById('chDriverName').textContent = `Driver: ${challan.driverName || '—'}`;
+            document.getElementById('chVehicleNumber').textContent = `Vehicle: ${challan.vehicleNumber || '—'}`;
+            
+            const badge = document.getElementById('chStatusBadge');
+            badge.textContent = challan.status || 'Pending Delivery';
+            if (challan.status === 'Converted to Sale' || challan.status === 'Converted') {
+                badge.style.background = '#d1fae5';
+                badge.style.color = '#059669';
+            } else {
+                badge.style.background = '#fef3c7';
+                badge.style.color = '#d97706';
+            }
+
+            // Populate Table
+            const tbody = document.getElementById('challanItemsTableBody');
+            const total = challan.total || 0;
+            const rate = challan.unitPrice || 0;
+            const qty = challan.quantity || 0;
+            const unit = product.unit || 'pc';
+
+            tbody.innerHTML = `
+                <tr style="border-bottom: 1px solid #f3f4f6;">
+                    <td style="padding: 12px 0; font-size: 14px; color: #374151; font-weight: 600;">1</td>
+                    <td style="padding: 12px 0; font-size: 14px; color: #111827; font-weight: 600;">${escapeHtml(product.name)}</td>
+                    <td style="padding: 12px 0; font-size: 14px; color: #374151; text-align: center;">${qty} ${unit}s</td>
+                    <td style="padding: 12px 0; font-size: 14px; color: #374151; text-align: right;">₹${rate.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    <td style="padding: 12px 0; font-size: 14px; color: #111827; font-weight: 700; text-align: right;">₹${total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                </tr>
+            `;
+
+            document.getElementById('chTotalAmount').textContent = `₹${total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+            
+            // Salesman Name signature
+            const email = (auth.currentUser ? auth.currentUser.email : '') || 'Salesman';
+            document.getElementById('chSalesmanName').textContent = email;
+
+            // Convert to sale button control
+            const convertBtn = document.getElementById('chConvertBtn');
+            const conversionInfo = document.getElementById('chConversionInfo');
+
+            if (challan.status === 'Converted to Sale' || challan.status === 'Converted') {
+                convertBtn.style.display = 'none';
+                conversionInfo.style.display = 'inline-block';
+                conversionInfo.innerHTML = `<i class="fas fa-check-circle" style="color:#059669; margin-right:4px"></i> Converted to Sale (Invoice: <strong>${challan.saleInvoiceNumber || '—'}</strong>)`;
+            } else {
+                convertBtn.style.display = 'block';
+                conversionInfo.style.display = 'none';
+            }
+
+            // Open Modal
+            document.getElementById('challanViewModal').style.display = 'flex';
+        };
+
+        window.printChallan = function () {
+            const printArea = document.getElementById('challanViewPrintArea');
+            const printModal = document.getElementById('challanViewModal');
+            printArea.classList.add('print-active');
+            printModal.classList.add('print-modal-active');
+            window.print();
+            setTimeout(() => {
+                printArea.classList.remove('print-active');
+                printModal.classList.remove('print-modal-active');
+            }, 500);
+        };
+
+        window.downloadChallanPDF = function () {
+            const element = document.getElementById('challanViewPrintArea');
+            const filename = `${document.getElementById('chNumber').textContent}.pdf`;
             
             showToast('Generating PDF...');
             
@@ -3304,7 +3969,6 @@
                 const imgData = canvas.toDataURL('image/png');
                 const pdf = new jsPDF('p', 'mm', 'a4');
                 const imgWidth = 210 - 20; // 190mm
-                const pageHeight = 297;
                 const imgHeight = (canvas.height * imgWidth) / canvas.width;
                 
                 pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
@@ -3314,6 +3978,100 @@
                 console.error('PDF generation error:', err);
                 showToast('❌ Failed to download PDF');
             });
+        };
+
+        window.directConvertChallan = async function (challanId) {
+            activeChallanId = challanId;
+            await convertActiveChallanToSale();
+        };
+
+        window.convertActiveChallanToSale = async function () {
+            if (!activeChallanId) return;
+            const challan = allChallans.find(c => c.id === activeChallanId);
+            if (!challan) {
+                alert('Challan record not found');
+                return;
+            }
+
+            if (challan.status === 'Converted to Sale' || challan.status === 'Converted') {
+                alert('This challan is already converted to a sale.');
+                return;
+            }
+
+            try {
+                showToast('Converting challan to sale...');
+                const productDoc = await db.collection('products').doc(challan.productId).get();
+                const product = productDoc.data();
+
+                if ((product.stock || 0) < challan.quantity) {
+                    alert(`Insufficient stock! Product in stock: ${product.stock}, required: ${challan.quantity}`);
+                    return;
+                }
+
+                const batch = db.batch();
+                
+                // 1. Deduct stock
+                batch.update(db.collection('products').doc(challan.productId), {
+                    stock: (product.stock || 0) - challan.quantity
+                });
+
+                // 2. Add pending fees to shop
+                const shopRef = db.collection('shops').doc(challan.shopId);
+                const shopDoc = await shopRef.get();
+                batch.update(shopRef, {
+                    pending_fees: (shopDoc.data()?.pending_fees || 0) + challan.total
+                });
+
+                // 3. Create sale record
+                const todayStr = new Date().toISOString().split('T')[0].replace(/-/g, ''); // YYYYMMDD
+                const salesToday = await db.collection('sales')
+                    .where('dateStr', '==', todayStr)
+                    .get();
+                const sequenceNum = salesToday.size + 1;
+                const seqStr = String(sequenceNum).padStart(3, '0');
+                const invoiceNumber = `INV-${todayStr}-${seqStr}`;
+
+                const saleRef = db.collection('sales').doc();
+                batch.set(saleRef, {
+                    shopId: challan.shopId,
+                    productId: challan.productId,
+                    quantity: challan.quantity,
+                    unitPrice: challan.unitPrice,
+                    total: challan.total,
+                    amountPaid: 0,
+                    pendingAmount: challan.total,
+                    paymentStatus: 'Pending',
+                    paymentMethod: 'Credit (Due)',
+                    invoiceNumber,
+                    dateStr: todayStr,
+                    date: new Date().toLocaleDateString('en-IN'),
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // 4. Update challan status
+                const challanRef = db.collection('delivery_challans').doc(challan.id);
+                batch.update(challanRef, {
+                    status: 'Converted to Sale',
+                    saleInvoiceNumber: invoiceNumber,
+                    saleId: saleRef.id
+                });
+
+                await batch.commit();
+                showToast('Challan converted to sale successfully!');
+                
+                // Close Challan View Modal
+                closeModal('challanViewModal');
+                
+                // Refresh data
+                await loadAllData();
+                await loadAndRenderSales();
+
+                // Open Sale Invoice
+                viewInvoice(saleRef.id);
+            } catch (error) {
+                console.error(error);
+                alert('Error converting challan: ' + error.message);
+            }
         };
     </script>
 </body>
